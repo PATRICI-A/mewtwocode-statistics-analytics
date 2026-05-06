@@ -1,4 +1,5 @@
 package edu.eci.patriciaM12.infrastructure.adapters.persistence.entity;
+
 import edu.eci.patriciaM12.domain.model.enums.PatchCategory;
 import jakarta.persistence.*;
 import lombok.*;
@@ -33,7 +34,7 @@ public class StudentDashboardMetricEntity {
     @Column(name = "top_category")
     private PatchCategory topCategory;
 
-    @Column(name = "weekly_activity", columnDefinition = "TEXT")
+    @Column(name = "weekly_activity", columnDefinition = "jsonb")
     private String weeklyActivity;
 
     @Column(name = "computed_at", nullable = false)

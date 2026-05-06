@@ -1,6 +1,7 @@
 package edu.eci.patriciaM12.domain.model;
 
 import edu.eci.patriciaM12.domain.model.enums.PatchCategory;
+import edu.eci.patriciaM12.domain.model.enums.ParticipationLevel;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -25,4 +26,12 @@ public class StudentDashboardMetric {
         return computedAt != null &&
                 computedAt.isBefore(LocalDateTime.now().minusMinutes(5));
     }
+
+    public ParticipationLevel getParticipationLevel() {
+        if (patchesAttended >= 20) return ParticipationLevel.EMBAJADOR;
+        if (patchesAttended >= 10) return ParticipationLevel.CONECTOR;
+        if (patchesAttended >= 3)  return ParticipationLevel.ACTIVO;
+        return ParticipationLevel.NUEVO;
+    }
+
 }
