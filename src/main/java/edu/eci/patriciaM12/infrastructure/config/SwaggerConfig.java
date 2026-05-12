@@ -12,8 +12,8 @@ public class SwaggerConfig {
     public OpenAPI openAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("M12- Estadísticas y Analítica Funcionales")
-                        .description("Servicio de métricas y reportes para PATRICI.A")
+                        .title("M12 - Statistics and Analytics")
+                        .description("Metrics and reporting service for PATRICI.A")
                         .version("0.0.1-SNAPSHOT"));
     }
 }

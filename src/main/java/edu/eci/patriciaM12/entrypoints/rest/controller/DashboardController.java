@@ -18,14 +18,14 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/analytics")
 @RequiredArgsConstructor
-@Tag(name = "Dashboard", description = "dashboard personal del estudiante")
+@Tag(name = "Dashboard", description = "Personal student dashboard")
 @SecurityRequirement(name = "bearerAuth")
 public class DashboardController {
 
     private final GetStudentDashboardUseCase getStudentDashboardUseCase;
 
     @GetMapping("/dashboard")
-    @Operation(summary = "Retorna las métricas personales del estudiante autenticado")
+    @Operation(summary = "Returns personal metrics for the authenticated student")
     public ResponseEntity<StudentDashboardResponse> getDashboard(
             @AuthenticationPrincipal Jwt jwt) {
         UUID userId = UUID.fromString(jwt.getSubject());
