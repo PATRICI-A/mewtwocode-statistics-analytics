@@ -1,6 +1,6 @@
 <div align="center">
 
-# Mewtwo-Code — Microservicio de Estadísticas y Analítica (M12)
+# Mewtwo-Code — Microservicio de Estadísticas y Analítica
 
 ### *"Métricas en tiempo real para cada estudiante de PATRIC.IA"*
 
@@ -14,14 +14,14 @@
 
 ### Infraestructura & Calidad
 
-![Kafka](https://img.shields.io/badge/Apache%20Kafka-3.7-231F20?style=for-the-badge&logo=apache-kafka&logoColor=white)
+![Kafka](https://img.shields.io/badge/Apache%20Kafka-7.6-231F20?style=for-the-badge&logo=apache-kafka&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Container-2496ED?style=for-the-badge&logo=docker&logoColor=white)
-![Maven](https://img.shields.io/badge/Maven-Build-C71A36?style=for-the-badge&logo=apache-maven&logoColor=white)
+![Maven](https://img.shields.io/badge/Maven-3.9-C71A36?style=for-the-badge&logo=apache-maven&logoColor=white)
 
 ### Arquitectura
 
 ![Hexagonal](https://img.shields.io/badge/Architecture-Hexagonal-blueviolet?style=for-the-badge)
-![Clean Architecture](https://img.shields.io/badge/Clean-Architecture-blue?style=for-the-badge)
+![Adapter Pattern](https://img.shields.io/badge/Pattern-Adapter-blue?style=for-the-badge)
 ![REST API](https://img.shields.io/badge/REST-API-009688?style=for-the-badge)
 
 </div>
@@ -30,181 +30,269 @@
 
 ## Tabla de Contenidos
 
-1. [Integrantes](#1-integrantes)
-2. [Objetivo del Microservicio](#2-objetivo-del-microservicio)
-3. [Funcionalidades Principales](#3-funcionalidades-principales)
-4. [Estrategia de Versionamiento y Branches](#4-estrategia-de-versionamiento-y-branches)
-    - [4.1 Convenciones para crear ramas](#41-convenciones-para-crear-ramas)
-    - [4.2 Convenciones para crear commits](#42-convenciones-para-crear-commits)
-5. [Tecnologías Utilizadas](#5-tecnologías-utilizadas)
-6. [Funcionalidad](#6-funcionalidad)
-7. [Diagramas](#7-diagramas)
-8. [Manejo de Errores](#8-manejo-de-errores)
-9. [Evidencia de Pruebas y Ejecución](#9-evidencia-de-pruebas-y-ejecución)
-10. [Scaffolding](#10-scaffolding-del-microservicio)
-11. [Ejecución del Proyecto](#11-ejecución-del-proyecto)
-12. [CI/CD y Despliegue](#12-cicd-y-despliegue)
-13. [Contribuciones](#13-contribuciones)
+1. [Nombre del Microservicio](#1-nombre-del-microservicio)
+2. [Integrantes](#2-integrantes)
+3. [Tecnologías Utilizadas](#3-tecnologías-utilizadas)
+4. [Descripción del Módulo](#4-descripción-del-módulo)
+5. [Cómo Funciona el Módulo](#5-cómo-funciona-el-módulo)
+6. [Diagramas de Datos](#6-diagramas-de-datos)
+7. [Diagramas de Clases](#7-diagramas-de-clases)
+8. [Diagrama de Componentes](#8-diagrama-de-componentes)
+9. [Funcionalidades y Endpoints](#9-funcionalidades-y-endpoints)
+10. [Colas de Mensajería](#10-colas-de-mensajería)
+11. [Evidencia de Pruebas Unitarias](#11-evidencia-de-pruebas-unitarias)
+12. [Análisis de Cobertura](#12-análisis-de-cobertura)
+13. [Cómo Ejecutar el Proyecto](#13-cómo-ejecutar-el-proyecto)
+14. [Evidencia del Despliegue CI/CD](#14-evidencia-del-despliegue-cicd)
+15. [Scaffolding y Código Documentado](#15-scaffolding-y-código-documentado)
+16. [Pipeline de Desarrollo](#16-pipeline-de-desarrollo)
+17. [Pipeline de PROD](#17-pipeline-de-prod)
 
 ---
 
-## 1. Integrantes
+## 1. Nombre del Microservicio
 
-- Juan Esteban Rodriguez
-- Fabian Andrade
-- Diego Rozo
-- Juan David Gomez
-- Adrian Ducuara
+**m12-statistics-analytics**
+Puerto: `8084` · Base de datos: `m12_analytics` · Paquete base: `edu.eci.patriciaM12`
 
 ---
 
-## 2. Objetivo del Microservicio
+## 2. Integrantes
 
-El microservicio de **Estadísticas y Analítica** tiene por función principal proveer visibilidad cuantitativa sobre la actividad del campus de la plataforma PATRIC.IA. El módulo expone un dashboard personalizado para el estudiante con métricas de participación, nivel de actividad y actividad semanal. Si el estudiante no tiene métricas registradas, el sistema retorna un snapshot vacío con todos los días de la semana en cero y nivel de participación `NUEVO`. Este microservicio corre sobre el puerto `8084`, se encuentra integrado con Apache Kafka para ingesta de eventos en tiempo cuasi-real y PostgreSQL como base de datos principal.
+- Juan Esteban Rodríguez
+- Diego Alejandro Rozo
+- Cristian Adrián Ducuara
+- Juan David Gómez
+- Diego Fabian Andrade
 
 ---
 
-## 3. Funcionalidades Principales
+## 3. Tecnologías Utilizadas
+
+| **Tecnología**                           | **Versión** | **Uso en el proyecto**                                                |
+|------------------------------------------|:-----------:|-----------------------------------------------------------------------|
+| Java                                     |     21      | Lenguaje principal. Usado en build stage y runtime del contenedor Docker. |
+| Spring Boot                              |    3.3.0    | Framework principal. Orquesta web, seguridad, persistencia y mensajería. |
+| Spring Web                               |      —      | Exposición de controladores REST del módulo.                          |
+| Spring Security + OAuth2 Resource Server |      —      | Validación de JWT emitidos por el módulo de identidad.                |
+| Spring Data JPA                          |      —      | Acceso a PostgreSQL para las  entidades del módulo.                   |
+| Spring Kafka                             |      —      | Consumer del topic `metric_events`. Consumer group: `m12-analytics-group`. |
+| PostgreSQL                               |     16      | Base de datos propia del módulo                                       |
+| Apache Kafka                             |    7.6.0    | Bus de eventos. Topic: `metric_events`. Puerto: `9092`.               |
+| OpenCSV                                  |     5.9     | Generación de archivos CSV                                            |
+| Lombok                                   |      —      | Reducción de boilerplate                                              |
+| Jackson Datatype                         |      —      | Serialización de fechas y dias de la semana  en JSON.                 |
+| SpringDoc OpenAPI                        |    2.5.0    | Swagger UI automático                                                 |
+| H2                                       |      —      | BD en memoria para perfil. Modo PostgreSQL para compatibilidad.       |
+| JUnit 5                                  |      —      | Framework de pruebas unitarias.                                       |
+| Mockito                                  |      —      | Simulación de puertos en pruebas unitarias.                           |
+| AssertJ                                  |      —      | Aserciones fluidas en pruebas unitarias.                              |
+| JaCoCo                                   |   0.8.12    | Cobertura de código integrada al pipeline CI.                         |
+| Maven                                    |   3.9.14    | Gestión de dependencias y ciclo de vida del build.                    |
+| Docker                                   |      -      | Contenedor independiente del servicio                                 
+| Docker Compose                           |      —      | Orquestación local                                                    |
+| Sonar                                    |      —      | Annalisis estático de codigos                                         |
+| GitHub Actions                           |      —      | Pipeline CI disparado en push a `main`, `develop` y `feature/**`.     |
+
+---
+
+## 4. Descripción del Módulo
+
+El módulo de **Estadísticas y Analítica** provee visibilidad cuantitativa sobre la actividad del campus dentro del sistema PATRIC.IA. Opera como microservicio completamente independiente con su propia base de datos, su propio pipeline de despliegue y su propio ciclo de vida. Un fallo en este módulo nunca interrumpe el núcleo del sistema ni los demás módulos.
 
 <div align="center">
 
-<table>
-  <thead>
-    <tr>
-      <th>Funcionalidad</th>
-      <th>Descripción</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>Dashboard del Estudiante</strong></td>
-      <td>Retorna métricas personales del estudiante autenticado: parches asistidos, categoría favorita, actividad semanal por día y nivel de participación calculado (NUEVO, ACTIVO, CONECTOR, EMBAJADOR). Si no existen métricas, retorna un snapshot vacío.</td>
-    </tr>
-  </tbody>
-</table>
+| Campo | Descripción |
+|---|---|
+| **Nombre** | Estadísticas y Analítica |
+| **Sistema** | PATRIC.IA — EciBuddy |
+| **Equipo** | Mewtwo Code |
+| **Puerto** | `8084` |
+| **Base de datos** | `m12_analytics` (PostgreSQL 16) |
+| **Actores** | Estudiante autenticado · Administrador del sistema |
 
 </div>
 
----
-
-## 4. Estrategia de Versionamiento y Branches
-
-### Estrategia de Ramas (Git Flow)
-
-#### `main`
-- **Propósito:** Rama estable con la versión final lista para demo/producción.
-- **Reglas:** Solo recibe merges desde `release/*` y `hotfix/*`. Cada merge crea un tag SemVer (`vX.Y.Z`). Rama protegida con PR obligatorio y checks de CI en verde.
-
-#### `develop`
-- **Propósito:** Integración continua de trabajo; base de nuevas funcionalidades.
-- **Reglas:** Recibe merges desde `feature/*` y `release/*`. Rama protegida.
-
-#### `feature/*`
-- **Propósito:** Desarrollo de una funcionalidad, refactor o spike.
-- **Base:** `develop`. Se fusiona a `develop` mediante PR.
-
----
-
-### 4.1 Convenciones para crear ramas
-
-```
-feature/[nombre-funcionalidad]
-```
-
-Ejemplos:
-
-- `feature/dashboard`
-- `feature/panel-admin`
-- `feature/exportacion-csv`
-
-**Reglas:** Descripción clara, máximo 50 caracteres.
-
-### 4.2 Convenciones para crear commits
-
-```
-[tipo]: [descripción específica de la acción]
-```
-
-**Tipos de commit:**
-- `feat`: Nueva funcionalidad
-- `fix`: Corrección de errores
-- `docs`: Cambios en documentación
-
----
-
-## 5. Tecnologías Utilizadas
-
-| **Tecnología / Herramienta** | **Uso principal en el proyecto** |
-|---|---|
-| **Java 21 (OpenJDK)** | Lenguaje base del módulo con soporte para Spring Boot. |
-| **Spring Boot 3.3.0** | Framework principal que agrupa JPA, Security y Swagger en un solo ecosistema. |
-| **Spring Web** | Exposición del endpoint REST `GET /api/v1/analytics/dashboard`. |
-| **Spring Security + JWT** | Protección del endpoint mediante tokens JWT como OAuth2 Resource Server. |
-| **Spring Data JPA** | Acceso a PostgreSQL con mapeo objeto-relacional para `StudentDashboardMetricEntity`. |
-| **PostgreSQL** | Base de datos relacional principal para métricas, snapshots y solicitudes de reportes. |
-| **Apache Kafka 3.7.x** | Bus de eventos para ingesta de métricas en tiempo cuasi-real. |
-| **Apache Maven** | Gestión de dependencias y automatización de builds en el pipeline CI/CD. |
-| **Lombok** | Reducción de boilerplate con `@Getter`, `@Builder`, `@RequiredArgsConstructor`. |
-| **H2** | Base de datos en memoria para pruebas unitarias sin PostgreSQL real. |
-| **JUnit 5** | Framework de pruebas unitarias para validar servicios y lógica de dominio. |
-| **Mockito** | Simulación de puertos y repositorios en pruebas unitarias. |
-| **JaCoCo** | Medición de cobertura de pruebas integrada al pipeline. |
-| **SpringDoc OpenAPI 2.5.0** | Generación automática de Swagger UI desde anotaciones `@Operation` en los controladores. |
-| **Postman** | Validación manual de endpoints. |
-| **Docker** | Contenedorización del microservicio para garantizar consistencia entre ambientes. |
-| **GitHub Actions** | Pipeline de CI que compila, ejecuta tests y construye la imagen Docker en cada push. |
-
----
-
-## 6. Funcionalidad
-
----
-
-### Dashboard del Estudiante
-
-Retorna las métricas personales del estudiante autenticado. Si el estudiante no tiene métricas registradas, el sistema construye un snapshot vacío con `patchesAttended = 0`, actividad semanal en cero para cada día y nivel de participación `NUEVO`.
-
-**Endpoint principal:** `GET /api/v1/analytics/dashboard`
-
----
-
-### Estructura de la Respuesta (Response)
+**Funcionalidades cubiertas:**
 
 <div align="center">
 
-| Campo | Tipo | Descripción |
+| Funcionalidad | Actor | Descripción |
 |---|---|---|
-| userId | UUID | Identificador del estudiante. |
-| patchesAttended | Integer | Total de parches a los que se ha unido. |
-| topCategory | Enum | Categoría con mayor participación: STUDY, SPORTS, CULTURE, GAMING, FOOD, OTHER. |
-| weeklyActivity | Map\<DayOfWeek, Integer\> | Actividad agrupada por día de la semana (MONDAY–SUNDAY). |
-| participationLevel | Enum | Nivel calculado: NUEVO, ACTIVO, CONECTOR, EMBAJADOR. |
-| computedAt | LocalDateTime | Timestamp del último cálculo. |
-
-</div>
-
-**Niveles de participación:**
-
-<div align="center">
-
-| Nivel | Condición |
-|---|---|
-| NUEVO | 0 – 2 parches asistidos |
-| ACTIVO | 3 – 9 parches asistidos |
-| CONECTOR | 10 – 19 parches asistidos |
-| EMBAJADOR | 20 o más parches asistidos |
+| **Dashboard del Estudiante** | Estudiante autenticado | Métricas personales: parches asistidos, categoría favorita, actividad semanal por día y nivel de participación calculado en dominio. Si no hay datos retorna snapshot vacío con todos los días en 0. |
+| **Panel de Analítica** | Administrador | Métricas globales del sistema filtradas por rango de fechas y tipo de métrica. Semestre activo calculado automáticamente como rango por defecto. |
+| **Reportes CSV** | Administrador / Estudiante | Generación asíncrona de reportes CSV filtrados por fechas, categoría y zona. Ciclo de vida: `PENDING → READY / FAILED`. Verificación de ownership en descarga. |
 
 </div>
 
 ---
 
-### Happy Path (Ejemplo de Uso Exitoso)
+## 5. Cómo Funciona el Módulo
 
-1. El estudiante autenticado accede al dashboard enviando su JWT.
-2. El sistema consulta `student_dashboard_metrics` para obtener el snapshot más reciente.
-3. Si no existe snapshot, se construye uno vacío con todos los días de la semana en cero.
-4. Se calcula el `participationLevel` según los parches asistidos.
-5. Se retorna `200 OK` con las métricas del estudiante.
+### Qué otros módulos lo usan
+
+El módulo es consumido directamente por el **frontend de PATRIC.IA** a través de sus tres endpoints REST. Los demás módulos del sistema (Parches, Matching, Identidad) no llaman a este módulo directamente, en cambio, **publican eventos en el topic Kafka `metric_events`**, que el módulo consume para construir sus propias proyecciones de datos. El **Módulo de Identidad** emite los JWT que este módulo valida como OAuth2 Resource Server contra el issuer `http://localhost:8080`.
+
+### Qué patrones de diseño utiliza
+
+El módulo implementa el **patrón Adapter (Estructural)** como patrón de diseño principal. El dominio define puertos de salida como interfaces puras (`StudentMetricsRepositoryPort`, `AdminSnapshotRepositoryPort`, `ReportRequestRepositoryPort`, `CsvGeneratorPort`). Los adaptadores de infraestructura implementan estos puertos traduciendo entre objetos de dominio y tecnologías concretas (JPA, OpenCSV), sin que el dominio sepa nada de ellas.
+
+
+### Estilo de arquitectura detallado
+
+El módulo sigue una **arquitectura hexagonal** organizada en cuatro capas con dependencias estrictamente unidireccionales:
+
+```
+Entrypoints / Infrastructure → Application → Domain
+```
+
+<div align="center">
+
+| Capa | Responsabilidad | Dependencias |
+|---|---|---|
+| **Entrypoints** | Controladores REST + SecurityFilter. Traduce HTTP a llamadas de dominio. Extrae `userId` del JWT. | Application |
+| **Application** | Servicios que implementan los casos de uso. Lógica de coordinación: semestre activo, validación de rangos, generación `@Async`. | Domain |
+| **Domain** | Modelos, enumeraciones, excepciones y puertos (in/out). Calcula `participationLevel` directamente en el modelo. | Ninguna |
+| **Infrastructure** | Adaptadores JPA, `CsvGeneratorAdapter`, mappers, `SecurityConfig`, `SwaggerConfig`. | Domain |
+
+</div>
+
+La generación de CSV ocurre en un **hilo separado** con `@Async` en `ReportService.generateAsync()`, permitiendo retornar `202 Accepted` inmediatamente sin bloquear el hilo del request HTTP. Si la generación falla, el estado del reporte se persiste como `FAILED` — el error no propaga al cliente porque el `202` ya fue enviado.
+
+---
+
+## 6. Diagramas de Datos
+
+
+<div align="center">
+<img src="docs/M12_Entidad.jpg" alt="Diagrama Entidad-Relación" width="700"/>
+</div>
+
+El módulo persiste tres tablas independientes en `m12_analytics`. No existen claves foráneas entre ellas ni hacia bases de datos externas. Las referencias a entidades de otros módulos (como `userId`) se almacenan como `UUID` sin constraint de integridad referencial, ya que el módulo de identidad tiene su propia base de datos.
+
+### Tabla: `student_dashboard_metrics`
+
+<div align="center">
+
+| Campo | Tipo | Restricción | Descripción |
+|---|---|---|---|
+| `id` | `UUID` | PK | Identificador único del registro |
+| `user_id` | `UUID` | NOT NULL | Referencia externa al estudiante (sin FK) |
+| `period` | `DATE` | NOT NULL | Período al que corresponde la métrica |
+| `patches_attended` | `INTEGER` | NOT NULL | Total de parches asistidos en el período |
+| `top_category` | `VARCHAR` | NULLABLE | Categoría de parche con mayor participación |
+| `weekly_activity` | `JSONB` | NULLABLE | Actividad por día de la semana (MON–SUN → Integer) |
+| `computed_at` | `TIMESTAMP` | NOT NULL | Momento de cálculo de la métrica |
+
+</div>
+
+### Tabla: `admin_analytics_snapshot`
+
+<div align="center">
+
+| Campo | Tipo | Restricción | Descripción |
+|---|---|---|---|
+| `id` | `UUID` | PK | Identificador único del snapshot |
+| `snapshot_date` | `DATE` | NOT NULL, UNIQUE | Fecha del snapshot (un registro por día) |
+| `total_patches` | `INTEGER` | NOT NULL | Total de parches realizados en esa fecha |
+| `active_users` | `INTEGER` | NOT NULL | Usuarios activos en esa fecha |
+| `top_categories` | `TEXT` | NULLABLE | Lista de categorías con conteos (JSON serializado) |
+| `retention_rate` | `FLOAT` | NOT NULL | Tasa de retención de usuarios (0.0 – 1.0) |
+| `generated_at` | `TIMESTAMP` | NOT NULL | Momento de generación del snapshot |
+
+</div>
+
+### Tabla: `report_requests`
+
+<div align="center">
+
+| Campo | Tipo | Restricción | Descripción |
+|---|---|---|---|
+| `id` | `UUID` | PK | Identificador único de la solicitud |
+| `requested_by` | `UUID` | NOT NULL | Usuario que solicitó el reporte (ownership) |
+| `date_from` | `DATE` | NOT NULL | Inicio del rango de fechas del reporte |
+| `date_to` | `DATE` | NOT NULL | Fin del rango de fechas del reporte |
+| `filters` | `TEXT` | NULLABLE | Filtros aplicados (JSON: categoría, zona, includeAdmin) |
+| `status` | `VARCHAR` | NOT NULL | Estado actual: `PENDING` / `READY` / `FAILED` |
+| `file_url` | `VARCHAR` | NULLABLE | Ruta del CSV generado. `null` mientras es `PENDING` |
+| `created_at` | `TIMESTAMP` | NOT NULL | Momento de creación de la solicitud |
+
+</div>
+
+---
+
+## 7. Diagramas de Clases
+
+
+<div align="center">
+<img src="docs/M12_Clases.jpg" alt="Diagrama de Clases" width="700"/>
+</div>
+
+### Patrón de diseño: Adapter (Estructural)
+
+El módulo aplica el patrón **Adapter** para resolver la incompatibilidad entre lo que el dominio espera (objetos de dominio con métodos semánticamente nombrados) y lo que la infraestructura ofrece (entidades JPA, APIs de Spring Data, librerías externas). Los adaptadores implementan las interfaces de puerto del dominio y por dentro delegan en la tecnología concreta correspondiente, sin que el dominio ni los servicios de aplicación conozcan esa tecnología.
+
+<div align="center">
+
+| Rol  | Clase en el módulo |
+|---|---|
+| **Target** (interfaz esperada) | `StudentMetricsRepositoryPort`, `AdminSnapshotRepositoryPort`, `ReportRequestRepositoryPort`, `CsvGeneratorPort` |
+| **Adapter** | `StudentMetricsRepositoryAdapter`, `AdminSnapshotRepositoryAdapter`, `ReportRequestRepositoryAdapter`, `CsvGeneratorAdapter` |
+| **Adaptee** (interfaz incompatible) | `StudentMetricsJpaRepository`, `AdminSnapshotJpaRepository`, `ReportRequestJpaRepository`, `CSVWriter` (OpenCSV) |
+| **Client** | `DashboardService`, `AdminAnalyticsService`, `ReportService` |
+
+</div>
+
+**Modelos del dominio:**
+
+- **`StudentDashboardMetric`** — calcula `getParticipationLevel()` e `isStale()` directamente en el modelo.
+- **`AdminAnalyticsSnapshot`** — snapshot diario con restricción `UNIQUE` en `snapshotDate`.
+- **`ReportRequest`** — ciclo de vida `PENDING → READY / FAILED`. Verifica ownership con `requestedBy`.
+- **`ReportFilters`** — clase de valor inmutable con los filtros del reporte.
+- **`CategoryStat`** — clase de valor con `category`, `count` y `percentage`.
+- **`MetricEvent`** — DTO Kafka sin persistencia JPA.
+
+Enumeraciones: `ReportStatus` · `ParticipationLevel` · `PatchCategory` · `CampusZone` · `MetricType` · `MetricEventType`
+
+---
+
+## 8. Diagrama de Componentes
+
+> **Insertar aquí:** imagen del diagrama de componentes (`docs/diagrama_componentes_m12.png`)  
+> El archivo editable está en `docs/diagrama_componentes_m12.drawio` — abrir en [draw.io](https://app.diagrams.net) con **File → Open from → Device**.
+
+<div align="center">
+<img src="docs/diagrama_componentes_m12.png" alt="Diagrama de Componentes" width="900"/>
+</div>
+
+El diagrama muestra la arquitectura hexagonal completa con los cuatro grupos de componentes del módulo y sus conexiones con los sistemas externos:
+
+- **Entrypoints:** `DashboardController`, `AdminAnalyticsController`, `ReportController`, `SecurityFilter`
+- **Aplicación:** `DashboardService`, `AdminAnalyticsService`, `ReportService` (con hilo `@Async`)
+- **Dominio:** puertos de entrada y salida, modelos, enumeraciones, excepciones
+- **Infraestructura:** `StudentMetricsRepositoryAdapter`, `AdminSnapshotRepositoryAdapter`, `ReportRequestRepositoryAdapter`, `CsvGeneratorAdapter` + mappers JPA
+- **Sistemas externos:** PostgreSQL 16, Apache Kafka 7.6 (KRaft), Filesystem `/tmp/reports`, Spring Security OAuth2, Módulo de Identidad, Frontend
+
+---
+
+## 9. Funcionalidades y Endpoints
+
+### Resumen de Endpoints
+
+<div align="center">
+
+| **Método** | **Endpoint** | **Descripción** | **Rol requerido** |
+|:---:|---|---|:---:|
+| `GET` | `/api/v1/analytics/dashboard` | Dashboard personal del estudiante autenticado | JWT válido |
+| `GET` | `/api/v1/analytics/admin` | Panel de analítica global del sistema | `ADMINISTRADOR` |
+| `POST` | `/api/analytics/reports` | Solicitar generación asíncrona de reporte CSV | JWT válido |
+| `GET` | `/api/analytics/reports/{id}/download` | Consultar estado y descargar reporte CSV | JWT válido (owner) |
+
+</div>
+
+---
+
+### Endpoint 1 — Dashboard del Estudiante
 
 **Request:**
 ```
@@ -212,7 +300,9 @@ GET /api/v1/analytics/dashboard
 Authorization: Bearer <token>
 ```
 
-**Response:**
+El `userId` se extrae del JWT — el cliente nunca lo envía directamente.
+
+**Response — 200 OK:**
 ```json
 {
   "userId": "550e8400-e29b-41d4-a716-446655440001",
@@ -232,193 +322,314 @@ Authorization: Bearer <token>
 }
 ```
 
----
-
-### Tipos de errores manejados
-
 <div align="center">
 
-| **Código HTTP** | **Escenario** | **Mensaje de Error** |
-|:---:|---|---|
-| ![401](https://img.shields.io/badge/401-Unauthorized-red?style=flat) | JWT inválido o ausente | `"JWT inválido o ausente"` |
-| ![503](https://img.shields.io/badge/503-Service_Unavailable-critical?style=flat) | Falla en conexión con PostgreSQL | `"SERVICE_UNAVAILABLE"` |
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `userId` | `UUID` | Identificador del estudiante |
+| `patchesAttended` | `int` | Total de parches asistidos |
+| `topCategory` | `PatchCategory` | Categoría con mayor participación. `null` si no hay datos |
+| `weeklyActivity` | `Map<DayOfWeek, Integer>` | Actividad por día. Todos en `0` si no hay datos |
+| `participationLevel` | `ParticipationLevel` | Nivel calculado en dominio |
+| `computedAt` | `LocalDateTime` | Momento del cálculo |
 
 </div>
 
 ---
 
-## 7. Diagramas
+### Endpoint 2 — Panel de Analítica para Administrador
 
-### Diagrama de Componentes General de PATRIC.IA
-
-<div align="center">
-<img src="docs/ComponentesGeneral_PATRICIA.jpg" alt="Diagrama de Componentes General" width="700"/>
-</div>
-
----
-
-### Diagrama de Clases del Dominio
-
-<div align="center">
-<img src="docs/M12_Clases.jpg" alt="Diagrama de Clases" width="600"/>
-</div>
-
-**Resumen del diseño de dominio:**
-
-- **`StudentDashboardMetric`** — entidad central con `userId`, `period`, `patchesAttended`, `topCategory`, `weeklyActivity` y `computedAt`. Incluye `isStale(): boolean` que verifica si el desfase supera 5 minutos, y `getParticipationLevel(): ParticipationLevel` que calcula el nivel según parches asistidos.
-- **`AdminAnalyticsSnapshot`** — snapshot diario del sistema con `snapshotDate`, `totalPatches`, `activeUsers`, `topCategories`, `peakHours`, `retentionRate` y `generatedAt`.
-- **`CategoryStat`** — clase de valor con `category`, `count` y `percentage`.
-- **`ReportRequest`** — gestiona solicitudes de exportación CSV con `id`, `requestedBy`, `dateFrom`, `dateTo`, `filters`, `status` y `fileUrl`.
-- **`ReportFilters`** — clase de valor inmutable con `category`, `campusZone`, `dateFrom` y `dateTo`.
-- **`MetricEvent`** — DTO Kafka sin persistencia JPA con `eventId`, `sourceModule`, `eventType`, `payload` y `emittedAt`.
-
-Enumeraciones: `ReportStatus` (PENDING, READY, FAILED), `MetricEventType` (JOIN, LEAVE, VIEW, CREATE, DELETE), `ParticipationLevel` (NUEVO, ACTIVO, CONECTOR, EMBAJADOR), `PatchCategory` (STUDY, SPORTS, CULTURE, GAMING, FOOD, OTHER), `CampusZone` (BIBLIOTECA, CAFETERIA, CANCHA, SALON, PARQUEADERO, EXTERNO).
-
----
-
-### Diagrama de Entidad-Relación
-
-<div align="center">
-<img src="docs/M12_Entidad.jpg" alt="Diagrama Entidad-Relación" width="600"/>
-</div>
-
-#### Tabla: `student_dashboard_metrics`
+**Request:**
+```
+GET /api/v1/analytics/admin?startDate=2025-02-01&endDate=2025-06-30&metricType=USERS
+Authorization: Bearer <token>  (role: ADMINISTRADOR)
+```
 
 <div align="center">
 
-| Campo | Tipo | Descripción | Restricciones |
-|---|---|---|---|
-| **id** | `UUID` | Identificador único | PK |
-| **user_id** | `UUID` | ID del estudiante | NOT NULL |
-| **period** | `DATE` | Período de las métricas | NOT NULL |
-| **patches_attended** | `INT` | Total de parches asistidos | NOT NULL |
-| **top_category** | `ENUM` | Categoría con mayor participación | Opcional |
-| **weekly_activity** | `JSON` | Actividad por día de semana | Opcional |
-| **computed_at** | `DATETIME` | Timestamp del último cálculo | NOT NULL |
+| Query Param | Tipo | Obligatorio | Descripción |
+|---|---|:---:|---|
+| `startDate` | `yyyy-MM-dd` | No | Inicio del rango. Por defecto: inicio del semestre activo |
+| `endDate` | `yyyy-MM-dd` | No | Fin del rango. Por defecto: fin del semestre activo |
+| `metricType` | `MetricType` | No | `USERS` / `PARCHES` / `EVENTS` / `MATCHES`. Sin valor retorna todas |
 
 </div>
 
-#### Tabla: `admin_analytics_snapshot`
-
-<div align="center">
-
-| Campo | Tipo | Descripción | Restricciones |
-|---|---|---|---|
-| **id** | `UUID` | Identificador único | PK |
-| **snapshot_date** | `DATE` | Fecha del snapshot | NOT NULL, UNIQUE |
-| **total_patches** | `INT` | Total de parches en el sistema | NOT NULL |
-| **active_users** | `INT` | Usuarios activos | NOT NULL |
-| **top_categories** | `JSON` | Categorías más populares | Opcional |
-| **retention_rate** | `FLOAT` | Tasa de retención | NOT NULL |
-| **generated_at** | `DATETIME` | Timestamp de generación | NOT NULL |
-
-</div>
-
-#### Tabla: `report_requests`
-
-<div align="center">
-
-| Campo | Tipo | Descripción | Restricciones |
-|---|---|---|---|
-| **id** | `UUID` | Identificador único | PK |
-| **requested_by** | `UUID` | ID del solicitante | NOT NULL |
-| **date_from** | `DATE` | Inicio del rango | NOT NULL |
-| **date_to** | `DATE` | Fin del rango | NOT NULL |
-| **filters** | `JSON` | Filtros aplicados | Opcional |
-| **status** | `ENUM` | PENDING, READY, FAILED | NOT NULL |
-| **file_url** | `VARCHAR` | URL del CSV generado | Opcional |
-| **created_at** | `DATETIME` | Fecha de creación | NOT NULL |
-
-</div>
-
----
-
-## 8. Manejo de Errores
-
-El microservicio implementa un `GlobalExceptionHandler` con `@RestControllerAdvice` que centraliza todas las excepciones y retorna siempre el mismo formato JSON estandarizado:
-
+**Response — 200 OK:**
 ```json
 {
-  "error": "TIPO_ERROR",
-  "message": "descripción legible del problema",
-  "status": "4xx"
+  "activeUsers": {
+    "timeSeries": { "2025-04-01": 45, "2025-04-02": 52 },
+    "total": 97
+  },
+  "parcheStats": {
+    "timeSeries": { "2025-04-01": 18, "2025-04-02": 24 },
+    "total": 42,
+    "categories": [
+      { "category": "STUDY", "count": 20 },
+      { "category": "SPORTS", "count": 12 }
+    ]
+  },
+  "matchSuccessRate": 0.78
 }
 ```
 
-### Excepciones de dominio manejadas
+Los campos no solicitados son `null` gracias a `@JsonInclude(NON_NULL)`.
+
+---
+
+### Endpoint 3 — Solicitar Reporte CSV
+
+**Request:**
+```
+POST /api/analytics/reports
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+```json
+{
+  "dateFrom": "2025-04-01",
+  "dateTo": "2025-06-30",
+  "category": "STUDY",
+  "campusZone": "BIBLIOTECA",
+  "includeAdmin": false
+}
+```
 
 <div align="center">
 
-| **Excepción** | **HTTP** | **Error Code** | **Escenario** |
-|---|:---:|---|---|
-| `MethodArgumentNotValidException` | 400 | `VALIDATION_ERROR` | Validación de campos fallida |
-| `MetricNotFoundException` | 404 | `METRIC_NOT_FOUND` | No se encontraron métricas para el usuario |
-| `ReportNotFoundException` | 404 | `REPORT_NOT_FOUND` | El reporte solicitado no existe |
-| `InvalidReportFiltersException` | 422 | `BUSINESS_RULE_VIOLATION` | dateFrom posterior a dateTo |
-| `AccessDeniedException` | 403 | `FORBIDDEN` | Usuario sin rol ADMIN intenta acceder al panel de administrador |
-| `ServiceUnavailableException` | 503 | `SERVICE_UNAVAILABLE` | Falla en PostgreSQL o Kafka consumer |
-| `Exception` | 500 | `INTERNAL_ERROR` | Error inesperado del servidor |
+| Campo | Tipo | Obligatorio | Descripción |
+|---|---|:---:|---|
+| `dateFrom` | `yyyy-MM-dd` | Sí | Inicio del rango |
+| `dateTo` | `yyyy-MM-dd` | Sí | Fin del rango. Debe ser posterior a `dateFrom` |
+| `category` | `PatchCategory` | No | `STUDY` / `SPORTS` / `CULTURE` / `GAMING` / `FOOD` / `OTHER` |
+| `campusZone` | `CampusZone` | No | `BIBLIOTECA` / `CAFETERIA` / `CANCHA` / `SALON` / `PARQUEADERO` / `EXTERNO` |
+| `includeAdmin` | `boolean` | No | Incluye actividad administrativa. Por defecto `false` |
+
+</div>
+
+**Response — 202 Accepted:**
+```json
+{
+  "id": "b7e2a1f0-...",
+  "status": "PENDING",
+  "fileUrl": null
+}
+```
+
+---
+
+### Endpoint 4 — Consultar y Descargar Reporte
+
+**Request:**
+```
+GET /api/analytics/reports/{id}/download
+Authorization: Bearer <token>
+```
+
+<div align="center">
+
+| Código | Condición | Body |
+|:---:|---|---|
+| `200 OK` | `status = READY` | URL del archivo CSV generado |
+| `202 Accepted` | `status = PENDING` | `"The report is still being generated. Try again in a few moments."` |
+| `500 Internal Server Error` | `status = FAILED` | `"Report generation failed. Try requesting it again."` |
+| `404 Not Found` | ID no existe o no pertenece al usuario | `"Reporte no encontrado: {id}"` |
 
 </div>
 
 ---
 
-## 9. Evidencia de Pruebas y Ejecución
+## 10. Colas de Mensajería
 
-### Tipos de pruebas implementadas
+El módulo utiliza **Apache Kafka 7.6** en modo **KRaft** como bus de eventos para la ingesta de métricas en tiempo cuasi-real.
+
+### Tópico consumido
 
 <div align="center">
 
-| **Tipo de Prueba** | **Descripción** | **Herramientas** |
-|---|---|---|
-| **Pruebas Unitarias** | Validan `DashboardService` con mocks del repositorio. Cubren retorno de métrica existente, snapshot vacío, cálculo de nivel de participación e `isStale()`. | JUnit 5, Mockito |
-| **Cobertura de Código** | JaCoCo genera reporte HTML con métricas de cobertura por clase y método. | JaCoCo |
+| Parámetro | Valor |
+|---|---|
+| **Tópico** | `metric_events` |
+| **Consumer group** | `m12-analytics-group` |
+| **Auto offset reset** | `earliest` |
+| **Key deserializer** | `StringDeserializer` |
+| **Value deserializer** | `StringDeserializer` |
+| **Bootstrap server (dev)** | `localhost:9092` |
+| **Bootstrap server (docker)** | `kafka:9092` |
 
 </div>
 
-### Cómo ejecutar las pruebas
+### Estructura del evento consumido
+
+Los eventos publicados por los demás módulos de PATRIC.IA en el topic `metric_events` son procesados por el `ProcessMetricEventUseCase`:
+
+<div align="center">
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `eventId` | `UUID` | Identificador único del evento |
+| `sourceModule` | `String` | Módulo que originó el evento (ej. `Parches`, `Matching`) |
+| `eventType` | `MetricEventType` | Tipo de acción: `JOIN` / `LEAVE` / `VIEW` / `CREATE` / `DELETE` |
+| `payload` | `String` | JSON con el contexto: userId, patchId, zona, categoría |
+| `emittedAt` | `LocalDateTime` | Timestamp de emisión del evento |
+
+</div>
+
+El módulo **no publica** eventos — es exclusivamente consumidor. La retención de mensajes en Kafka garantiza que si el módulo cae, los eventos se procesan al recuperarse gracias al `auto-offset-reset=earliest`.
+
+---
+
+## 11. Evidencia de Pruebas Unitarias
+
+> **Insertar aquí:** screenshot del output de `./mvnw test` con todos los tests en verde.
+
+El proyecto cuenta con **tres clases de prueba** que cubren los tres servicios principales:
+
+### `DashboardServiceTest` — 9 casos
+
+```
+✔ retornaMetricaExistenteCuandoRepositorioLaEncuentra
+✔ retornaSnapshotVacioCuandoNoExistenMetricas
+✔ snapshotVacioTieneTodosLosDiasDeLaSemanaEnCero
+✔ retornaNivelNuevoCuandoTieneCeroParches
+✔ retornaNivelActivoCuandoTieneTresParches
+✔ retornaNivelConectorCuandoTieneDiezParches
+✔ retornaNivelEmbajadorCuandoTieneVeinteParches
+✔ isStaleRetornaFalseCuandoComputedAtEsReciente
+✔ isStaleRetornaTrueCuandoDesfaseSuperaCincoMinutos
+```
+
+### `AdminAnalyticsServiceTest` — 3 casos
+
+```
+✔ retornaTodasLasMetricasCuandoMetricTypeEsNull
+✔ retornaSoloUsuariosCuandoMetricTypeEsUsers
+✔ rechazaEndDateCuandoNoEsPosteriorAStartDate
+```
+
+### `ReportServiceTest` — 6 casos
+
+```
+✔ createReport_conFiltrosValidos_retornaPending
+✔ createReport_cuandoDateFromEsPosteriorADateTo_lanzaInvalidReportFiltersException
+✔ findById_cuandoExisteYEsDelUsuario_retornaReporte
+✔ findById_cuandoNoExiste_lanzaReportNotFoundException
+✔ findById_cuandoPerteneceAOtroUsuario_lanzaReportNotFoundException
+✔ reportConVolumenGrande_sinDatosSensibles_generaCSVCorrectamente
+```
+
+**Criterios de aceptación:**
+- Todos los tests en estado `PASSED`
+- Puertos mockeados con Mockito — sin acceso a infraestructura real
+- Casos felices y de error cubiertos por cada caso de uso
+- Aserciones fluidas con AssertJ
+
+**Cómo ejecutar:**
+```bash
+./mvnw test
+```
+
+---
+
+## 12. Análisis de Cobertura
+
+> **Insertar aquí:** screenshot del reporte JaCoCo (`target/site/jacoco/index.html`).
+
+**Cómo generar el reporte:**
+```bash
+# Genera el reporte HTML de cobertura
+./mvnw clean test jacoco:report
+# Reporte disponible en: target/site/jacoco/index.html
+
+# O con verify (incluye todos los checks del pipeline)
+./mvnw verify
+```
+
+El reporte JaCoCo se genera automáticamente en cada ejecución del pipeline CI y se publica como artifact en GitHub Actions bajo el nombre `jacoco-report`.
+
+---
+
+## 13. Cómo Ejecutar el Proyecto
+
+### Prerrequisitos
+
+- Java 21
+- Maven 3.9+
+- Docker & Docker Compose
+
+### Opción 1 — Ejecución local con perfil `dev`
+
+El perfil `dev` usa H2 en memoria y no requiere Docker para la base de datos ni Kafka.
+
+```bash
+# 1. Clonar el repositorio
+git clone https://github.com/<org>/mewtwocode-statistics-analytics.git
+cd mewtwocode-statistics-analytics
+
+# 2. Ejecutar con perfil dev
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+```
+
+- **URL:** `http://localhost:8084`
+- **Swagger UI:** `http://localhost:8084/swagger-ui.html`
+- **H2 Console:** `http://localhost:8084/h2-console`
+
+### Opción 2 — Ejecución con Docker Compose (perfil `docker`)
+
+```bash
+# Levanta backend + PostgreSQL 16 + Kafka KRaft
+docker compose up --build
+```
+
+Los servicios se levantan con healthchecks: el backend espera a que PostgreSQL y Kafka estén saludables antes de arrancar (`depends_on: condition: service_healthy`).
+
+### Variables de entorno
+
+| Variable | Valor por defecto | Descripción |
+|---|---|---|
+| `SPRING_PROFILES_ACTIVE` | `dev` | Perfil activo: `dev` o `docker` |
+| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://postgres:5432/m12_analytics` | URL de PostgreSQL (perfil docker) |
+| `SPRING_DATASOURCE_USERNAME` | `patricia` | Usuario de PostgreSQL |
+| `SPRING_DATASOURCE_PASSWORD` | `patricia` | Contraseña de PostgreSQL |
+| `SPRING_KAFKA_BOOTSTRAP_SERVERS` | `kafka:9092` | Broker de Kafka (perfil docker) |
+| `SERVER_PORT` | `8084` | Puerto del servidor |
+
+### Pruebas
 
 ```bash
 # Pruebas unitarias
 ./mvnw test
 
-# Todas las pruebas + reporte JaCoCo
+# Pruebas + reporte de cobertura JaCoCo
 ./mvnw verify
 
-# Reporte de cobertura JaCoCo
-./mvnw clean test jacoco:report
-# Reporte en: target/site/jacoco/index.html
-
-# Prueba específica
+# Prueba de una clase específica
 ./mvnw test -Dtest=DashboardServiceTest
 ```
 
-### Clases de prueba implementadas
+---
 
-```
-src/test/java/edu/eci/patriciaM12/
-└── DashboardServiceTest.java
-    ├── retornaMetricaExistenteCuandoRepositorioLaEncuentra
-    ├── retornaSnapshotVacioCuandoNoExistenMetricas
-    ├── snapshotVacioTieneTodosLosDiasDeLaSemanaEnCero
-    ├── retornaNivelNuevoCuandoTieneCeroParches
-    ├── retornaNivelActivoCuandoTieneTresParches
-    ├── retornaNivelConectorCuandoTieneDiezParches
-    ├── retornaNivelEmbajadorCuandoTieneVeinteParches
-    ├── isStaleRetornaFalseCuandoComputedAtEsReciente
-    └── isStaleRetornaTrueCuandoDesfaseSuperaCincoMinutos
-```
+## 14. Evidencia del Despliegue CI/CD
 
-### Criterios de aceptación de pruebas
+> **Insertar aquí:** screenshot del pipeline de GitHub Actions en verde (Actions → CI — M12 Estadísticas y Analítica → última ejecución).
 
-- Todas las pruebas en estado PASSED
-- Cero errores de compilación
-- Casos felices y de error implementados por caso de uso
-- Ports mockeados correctamente sin acceso a infraestructura real
+El pipeline se define en `.github/workflows/ci.yml` y se ejecuta en cada push a `main`, `develop` o `feature/**` y en cada PR a `main` o `develop`.
+
+| Paso | Acción | Descripción |
+|---|---|---|
+| 1 | `actions/checkout@v4` | Clona el repositorio |
+| 2 | `actions/setup-java@v4` | Configura JDK 21 Temurin |
+| 3 | `actions/cache@v4` | Restaura caché de dependencias Maven |
+| 4 | `chmod +x mvnw` | Permisos al Maven Wrapper |
+| 5 | `./mvnw compile -q` | Verifica compilación |
+| 6 | `./mvnw verify` | Ejecuta tests + genera reporte JaCoCo |
+| 7 | `actions/upload-artifact@v4` | Publica reporte JaCoCo como artifact |
+| 8 | `docker build` | Construye imagen `m12-statistics-analytics:{sha}` |
 
 ---
 
-## 10. Scaffolding del Microservicio
+## 15. Scaffolding y Código Documentado
 
 ```
 mewtwocode-statistics-analytics/
@@ -429,192 +640,188 @@ mewtwocode-statistics-analytics/
 │   │   │   │
 │   │   │   ├── application/
 │   │   │   │   ├── dto/
+│   │   │   │   │   ├── request/
+│   │   │   │   │   │   └── ReportFiltersRequest.java         # DTO entrada para solicitud de reporte
 │   │   │   │   │   └── response/
-│   │   │   │   │       └── StudentDashboardResponse.java
+│   │   │   │   │       ├── AdminAnalyticsResponse.java       # Response panel admin (@JsonInclude NON_NULL)
+│   │   │   │   │       ├── AnalyticsDTO.java                 # Serie temporal + total + categorías
+│   │   │   │   │       ├── EventAnalyticsDTO.java            # Top eventos del campus
+│   │   │   │   │       ├── HeatmapDTO.java                   # Heatmap de actividad por zona
+│   │   │   │   │       ├── ReportRequestResponse.java        # Response ciclo de vida del reporte
+│   │   │   │   │       └── StudentDashboardResponse.java     # Response dashboard del estudiante
 │   │   │   │   └── service/
-│   │   │   │       └── DashboardService.java
+│   │   │   │       ├── AdminAnalyticsService.java            # Implementa GetAdminAnalyticsUseCase
+│   │   │   │       ├── DashboardService.java                 # Implementa GetStudentDashboardUseCase
+│   │   │   │       └── ReportService.java                    # Implementa RequestReportUseCase + @Async
 │   │   │   │
 │   │   │   ├── domain/
 │   │   │   │   ├── exceptions/
-│   │   │   │   │   ├── InvalidReportFiltersException.java
-│   │   │   │   │   ├── MetricNotFoundException.java
-│   │   │   │   │   └── ReportNotFoundException.java
+│   │   │   │   │   ├── CsvGenerationException.java           # Fallo en generación del CSV
+│   │   │   │   │   ├── InvalidReportFiltersException.java    # dateFrom > dateTo (@ResponseStatus 400)
+│   │   │   │   │   ├── MetricNotFoundException.java          # Métrica de dominio no encontrada
+│   │   │   │   │   └── ReportNotFoundException.java          # Reporte no existe o no es del usuario
 │   │   │   │   ├── model/
-│   │   │   │   │   ├── AdminAnalyticsSnapshot.java
-│   │   │   │   │   ├── CategoryStat.java
-│   │   │   │   │   ├── MetricEvent.java
-│   │   │   │   │   ├── ReportFilters.java
-│   │   │   │   │   ├── ReportRequest.java
-│   │   │   │   │   ├── StudentDashboardMetric.java
+│   │   │   │   │   ├── AdminAnalyticsSnapshot.java           # Snapshot diario (UNIQUE por fecha)
+│   │   │   │   │   ├── CategoryStat.java                     # Valor: category + count + percentage
+│   │   │   │   │   ├── MetricEvent.java                      # DTO Kafka (sin persistencia JPA)
+│   │   │   │   │   ├── ReportFilters.java                    
+│   │   │   │   │   ├── ReportRequest.java                    
+│   │   │   │   │   ├── StudentDashboardMetric.java           
 │   │   │   │   │   └── enums/
 │   │   │   │   │       ├── CampusZone.java
 │   │   │   │   │       ├── MetricEventType.java
+│   │   │   │   │       ├── MetricType.java
 │   │   │   │   │       ├── ParticipationLevel.java
 │   │   │   │   │       ├── PatchCategory.java
 │   │   │   │   │       └── ReportStatus.java
 │   │   │   │   └── ports/
 │   │   │   │       ├── in/
-│   │   │   │       │   ├── GetAdminAnalyticsUseCase.java
-│   │   │   │       │   ├── GetStudentDashboardUseCase.java
-│   │   │   │       │   ├── ProcessMetricEventUseCase.java
-│   │   │   │       │   └── RequestReportUseCase.java
+│   │   │   │       │   ├── GetAdminAnalyticsUseCase.java     # Puerto entrada: panel admin
+│   │   │   │       │   ├── GetStudentDashboardUseCase.java   # Puerto entrada: dashboard estudiante
+│   │   │   │       │   ├── ProcessMetricEventUseCase.java    # Puerto entrada: consumer Kafka
+│   │   │   │       │   └── RequestReportUseCase.java         # Puerto entrada: reportes CSV
 │   │   │   │       └── out/
-│   │   │   │           ├── AdminSnapshotRepositoryPort.java
-│   │   │   │           ├── ReportRequestRepositoryPort.java
-│   │   │   │           └── StudentMetricsRepositoryPort.java
+│   │   │   │           ├── AdminSnapshotRepositoryPort.java  # Puerto salida: repositorio snapshots
+│   │   │   │           ├── CsvGeneratorPort.java             # Puerto salida: generación CSV
+│   │   │   │           ├── ReportRequestRepositoryPort.java  # Puerto salida: repositorio reportes
+│   │   │   │           └── StudentMetricsRepositoryPort.java # Puerto salida: repositorio métricas
 │   │   │   │
 │   │   │   ├── entrypoints/
 │   │   │   │   └── rest/controller/
-│   │   │   │       └── DashboardController.java        (GET /api/v1/analytics/dashboard)
+│   │   │   │       ├── AdminAnalyticsController.java         # GET /api/v1/analytics/admin
+│   │   │   │       ├── DashboardController.java              # GET /api/v1/analytics/dashboard
+│   │   │   │       └── ReportController.java                 # POST + GET /api/analytics/reports
 │   │   │   │
 │   │   │   ├── infrastructure/
 │   │   │   │   ├── adapters/
-│   │   │   │   │   ├── adapter/
-│   │   │   │   │   │   └── StudentMetricsRepositoryAdapter.java
+│   │   │   │   │   ├── csv/
+│   │   │   │   │   │   └── CsvGeneratorAdapter.java          # Implementa CsvGeneratorPort (OpenCSV)
 │   │   │   │   │   └── persistence/
+│   │   │   │   │       ├── AdminSnapshotRepositoryAdapter.java
+│   │   │   │   │       ├── ReportRequestRepositoryAdapter.java
+│   │   │   │   │       ├── StudentMetricsRepositoryAdapter.java
 │   │   │   │   │       ├── entity/
 │   │   │   │   │       │   ├── AdminAnalyticsSnapshotEntity.java
 │   │   │   │   │       │   ├── ReportRequestEntity.java
 │   │   │   │   │       │   └── StudentDashboardMetricEntity.java
 │   │   │   │   │       ├── mapper/
+│   │   │   │   │       │   ├── AdminAnalyticsSnapshotMapper.java
+│   │   │   │   │       │   ├── ReportRequestMapper.java
 │   │   │   │   │       │   └── StudentMetricsMapper.java
 │   │   │   │   │       └── repository/
+│   │   │   │   │           ├── AdminSnapshotJpaRepository.java
+│   │   │   │   │           ├── ReportRequestJpaRepository.java
 │   │   │   │   │           └── StudentMetricsJpaRepository.java
 │   │   │   │   └── config/
-│   │   │   │       ├── SecurityConfig.java
-│   │   │   │       └── SwaggerConfig.java
+│   │   │   │       ├── SecurityConfig.java                   # JWT converter + rutas protegidas por rol
+│   │   │   │       └── SwaggerConfig.java                    # OpenAPI / Swagger UI
 │   │   │   │
 │   │   │   └── PatriciaM12Application.java
 │   │   │
 │   │   └── resources/
-│   │       └── application.properties
+│   │       ├── application.properties                        # Config base: puerto, Kafka, OAuth2, Swagger
+│   │       ├── application-dev.properties                    # H2 en memoria, ddl-auto: create-drop
+│   │       ├── application-docker.properties                 # PostgreSQL real, ddl-auto: update
+│   │       └── data-dev.sql                                  # Seed de datos para perfil dev
 │   │
 │   └── test/
 │       └── java/edu/eci/patriciaM12/
-│           └── DashboardServiceTest.java
+│           ├── AdminAnalyticsServiceTest.java                # 3 casos — panel admin y validaciones
+│           ├── DashboardServiceTest.java                     # 9 casos — dashboard y participationLevel
+│           └── ReportServiceTest.java                        # 6 casos — reportes CSV y ownership
 │
 ├── docs/
-│   ├── ComponentesGeneral_PATRICIA.jpg
-│   ├── M12_Clases.jpg
-│   └── M12_Entidad.jpg
+│   ├── diagrama_componentes_m12.png                          # Diagrama de componentes especifico del sistema
+│   ├── ComponentesGeneral_PATRICIA.jpg                       # Diagrama general del sistema
+│   ├── M12_Clases.jpg                                        # Diagrama de clases
+│   └── M12_Entidad.jpg                                       # Diagrama entidad-relación
 │
 ├── .github/workflows/
-│   └── ci.yml
-│
-├── .dockerignore
-├── Dockerfile
-├── docker-compose.yml
+│    ├── ci.yml                                               # Pipeline CI: compile → test → jacoco → docker
+│    ├── cd.yml                                               # Deploy JAR -> Azure App Service
+│    └── sonar.yml                                            # Análisis de calidad con SonarCloud                                                                          
+├── .dockerignore 
+├── Dockerfile                                                # Contenedorización
+├── docker-compose.yml                                        # Backend + PostgreSQL 16 + Kafka KRaft
 ├── pom.xml
 └── README.md
 ```
 
-### Arquitectura Hexagonal Implementada
-
-<div align="center">
-
-| **Capa** | **Responsabilidad** | **Dependencias** |
-|---|---|---|
-| **Domain** | Modelos (`StudentDashboardMetric`, `AdminAnalyticsSnapshot`, `ReportRequest`, `CategoryStat`, `MetricEvent`), enums, excepciones y puertos | Ninguna (independiente) |
-| **Application** | `DashboardService` — implementa `GetStudentDashboardUseCase` | Solo `Domain` |
-| **Entrypoints** | `DashboardController` — `GET /api/v1/analytics/dashboard` | `Domain` + `Application` |
-| **Infrastructure** | `StudentMetricsRepositoryAdapter`, entidades JPA, `StudentMetricsMapper`, `StudentMetricsJpaRepository`, `SecurityConfig`, `SwaggerConfig` | `Domain` + `Application` |
-
-</div>
-
-**Flujo de dependencias:** `Entrypoints / Infrastructure → Application → Domain`
-
 ---
 
-## 11. Ejecución del Proyecto
+## 16. Pipeline de Desarrollo
 
-### Prerrequisitos
+El pipeline de desarrollo garantiza que ningún código roto llegue a la rama de integración. Se ejecuta automáticamente en cada push a `develop` y `feature/**`.
 
-- Java 21
-- Maven 3.9+
-- Docker & Docker Compose
-
-### Opción 1: Ejecución Local (Maven)
-
-```bash
-# 1. Clonar repositorio
-git clone https://github.com/<org>/mewtwocode-statistics-analytics.git
-
-# 2. Levantar base de datos y Kafka
-docker compose up -d
-
-# 3. Ejecutar la aplicación
-./mvnw spring-boot:run
+```yaml
+on:
+  push:
+    branches: [ develop, feature/** ]
+  pull_request:
+    branches: [ develop ]
 ```
 
-**URL Local:** `http://localhost:8084`
-**Swagger UI:** `http://localhost:8084/swagger-ui.html`
-**OpenAPI Docs:** `http://localhost:8084/v3/api-docs`
-
-### Opción 2: Ejecución con Docker Compose
-
+**Pasos:**
 ```bash
-docker compose up --build
+# 1. Checkout + Java 21 Temurin + caché Maven
+# 2. Compilar
+./mvnw compile -q
+
+# 3. Tests + JaCoCo
+./mvnw verify
+
+# 4. Publicar reporte JaCoCo como artifact
+# 5. Build imagen Docker
+docker build -t m12-statistics-analytics:${GITHUB_SHA} .
 ```
 
-### Variables de Entorno
+**Estrategia de ramas (Git Flow):**
 
-| Variable | Valor por defecto | Descripción |
-|---|---|---|
-| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://localhost:5433/m12_analytics` | URL de PostgreSQL |
-| `SPRING_DATASOURCE_USERNAME` | `patricia` | Usuario de PostgreSQL |
-| `SPRING_DATASOURCE_PASSWORD` | `patricia` | Contraseña de PostgreSQL |
-| `SPRING_KAFKA_BOOTSTRAP_SERVERS` | `localhost:9092` | Broker de Kafka |
-| `PORT` | `8084` | Puerto del servidor |
+```
+main          ← merges desde release/* y hotfix/* únicamente (tags vX.Y.Z)
+  └── develop ← integración continua
+        └── feature/dashboard
+        └── feature/panel-admin
+        └── feature/exportacion-csv
+```
 
----
+**Convenciones de ramas:**
+```
+feature/[nombre-funcionalidad]   # máximo 50 caracteres
+```
 
-## 12. CI/CD y Despliegue
-
-### Pipeline de Automatización (GitHub Actions)
-
-El flujo en `.github/workflows/ci.yml` se ejecuta en cada push a `main`, `develop` o `feature/**` y en cada PR a `main` o `develop`:
-
-1. **Checkout** — Clona el repositorio con `actions/checkout@v4`.
-2. **Java 21** — Configura el JDK con `actions/setup-java@v4` (distribución Temurin).
-3. **Cache Maven** — Restaura dependencias cacheadas para acelerar el build.
-4. **Dar permisos** — `chmod +x mvnw`.
-5. **Compilar** — `./mvnw compile -q` verifica que el código sea válido.
-6. **Tests y JaCoCo** — `./mvnw verify` ejecuta pruebas y genera reporte de cobertura.
-7. **Publicar reporte** — Sube el reporte JaCoCo como artifact de la ejecución.
-8. **Docker Build** — Construye la imagen `m12-statistics-analytics:{sha}`.
-
-### Infraestructura
-
-<div align="center">
-
-| **Componente** | **Descripción** |
-|---|---|
-| PostgreSQL | Base de datos relacional — tablas `student_dashboard_metrics`, `admin_analytics_snapshot`, `report_requests` |
-| Apache Kafka | Bus de eventos para ingesta de métricas en tiempo cuasi-real |
-| GitHub Actions | Pipeline CI de compilación, pruebas y Docker build |
-| Swagger UI | Documentación interactiva en `/swagger-ui.html` |
-
-</div>
+**Convenciones de commits:**
+```
+feat: nueva funcionalidad
+fix:  corrección de error
+docs: cambio en documentación
+```
 
 ---
 
-## 13. Contribuciones y Metodología
+## 17. Pipeline de PROD
 
-El equipo **Mewtwo-Code** aplicó la metodología **Scrum** con sprints semanales para garantizar una entrega incremental y mejora continua.
+El pipeline de producción se ejecuta únicamente en push a `main`, garantizando que solo código validado mediante PR y con todos los checks en verde llega a producción.
 
-### Equipo Scrum
+```yaml
+on:
+  push:
+    branches: [ main ]
+```
 
-| Rol | Responsabilidad |
+**Pasos adicionales respecto al pipeline de desarrollo:**
+
+| Paso | Descripción |
 |---|---|
-| **Product Owner** | Priorización del Backlog y maximización de valor. |
-| **Scrum Master** | Facilitador del proceso y eliminación de impedimentos. |
-| **Developers** | Diseño, implementación y pruebas de funcionalidades. |
+| Todos los pasos del pipeline de desarrollo | Compile → Test → JaCoCo → Docker build |
+| Tag de imagen con versión semántica | `m12-statistics-analytics:v{tag}` |
+| Push de imagen al registro de contenedores | Publicación de la imagen Docker |
+| Despliegue en EC2 | `docker compose up -d` en instancia EC2 t3.medium con perfil `docker` |
 
-### Eventos y Artefactos
-
-- **Sprints Semanales**: Ciclos cortos de desarrollo.
-- **Daily Scrum**: Sincronización diaria (15 min).
-- **Sprint Review & Retrospective**: Demostración de incrementos y mejora de procesos.
+**Reglas de protección de `main`:**
+- PR obligatorio con al menos 1 aprobación
+- Todos los checks del pipeline de desarrollo en verde antes del merge
+- Push directo a `main` bloqueado
 
 ---
 
@@ -627,7 +834,7 @@ El equipo **Mewtwo-Code** aplicó la metodología **Scrum** con sprints semanale
 ![Course](https://img.shields.io/badge/Course-DOSW-orange?style=for-the-badge)
 ![Year](https://img.shields.io/badge/Year-2026--1-blue?style=for-the-badge)
 
-> **PATRIC.IA Statistics & Analytics Service** es el punto central de visibilidad de métricas del campus, diseñado para retornar dashboards personalizados con niveles de participación calculados en tiempo real.
+> **PATRIC.IA Statistics & Analytics Service** — punto central de visibilidad de métricas del campus, con dashboards personalizados, analítica administrativa y exportación asíncrona de reportes CSV.
 
 **Escuela Colombiana de Ingeniería Julio Garavito**
 

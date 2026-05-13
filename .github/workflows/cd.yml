@@ -1,0 +1,39 @@
+name: CD — M12 Estadísticas y Analítica
+
+on:
+  workflow_run:
+    workflows: [ "CI — M12 Estadísticas y Analítica" ]
+    branches: [ main ]
+    types: [ completed ]
+
+jobs:
+  deploy:
+    name: Deploy → Azure App Service
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Descargar JAR generado por CI
+        uses: actions/download-artifact@v4
+        with:
+          name: app-jar
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: target/
+
+      - name: Login en Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Desplegar JAR en Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_APP_SERVICE_NAME }}
+          package: target/*.jar
+
+      - name: Verificar despliegue
+        run: |
+          echo "Despliegue completado"
+          echo "URL: https://${{ secrets.AZURE_APP_SERVICE_NAME }}.azurewebsites.net"
+          echo "Swagger: https://${{ secrets.AZURE_APP_SERVICE_NAME }}.azurewebsites.net/swagger-ui.html"
