@@ -9,6 +9,11 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Generic analytics data transfer object that aggregates time-series counts,
+ * a totals summary, and an optional breakdown by category.
+ * Empty collections and {@code null} values are excluded from serialisation.
+ */
 @Value
 @Builder
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

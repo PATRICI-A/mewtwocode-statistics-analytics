@@ -18,6 +18,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 
+/**
+ * REST controller that exposes the admin analytics panel endpoint.
+ * All routes under {@code /api/v1/analytics/admin} require the {@code ADMINISTRADOR} role
+ * (bypassed in the {@code dev} Spring profile for convenience).
+ */
 @RestController
 @RequestMapping("/api/v1/analytics/admin")
 @RequiredArgsConstructor
@@ -27,6 +32,17 @@ public class AdminAnalyticsController {
 
     private final GetAdminAnalyticsUseCase getAdminAnalyticsUseCase;
 
+    /**
+     * Returns the global analytics panel for administrators.
+     * When {@code startDate} or {@code endDate} are omitted the active academic semester is used.
+     * When {@code metricType} is omitted all metric categories are included in the response.
+     *
+     * @param authorization the Bearer token forwarded from the gateway (hidden from Swagger UI)
+     * @param startDate     optional start of the query window (ISO date)
+     * @param endDate       optional end of the query window (ISO date)
+     * @param metricType    optional metric filter; {@code null} means all metrics
+     * @return HTTP 200 with the populated {@link AdminAnalyticsResponse}
+     */
     @GetMapping
     @Operation(summary = "Returns the global analytics panel for administrators")
     public ResponseEntity<AdminAnalyticsResponse> getAdminAnalyticsPanel(

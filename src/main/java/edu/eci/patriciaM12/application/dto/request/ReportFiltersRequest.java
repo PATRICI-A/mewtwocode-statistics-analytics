@@ -9,6 +9,11 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
+/**
+ * Incoming request payload carrying the filter criteria used to generate a CSV report.
+ * Both {@code dateFrom} and {@code dateTo} are mandatory; the remaining fields are optional
+ * and default to no restriction when omitted.
+ */
 @Data
 @NoArgsConstructor
 public class ReportFiltersRequest {
@@ -23,6 +28,11 @@ public class ReportFiltersRequest {
     private CampusZone campusZone;
     private boolean includeAdmin;
 
+    /**
+     * Converts this request object into the domain {@link ReportFilters} model.
+     *
+     * @return a fully populated {@link ReportFilters} instance built from the fields of this request
+     */
     public ReportFilters toDomain() {
         return ReportFilters.builder()
                 .dateFrom(dateFrom)

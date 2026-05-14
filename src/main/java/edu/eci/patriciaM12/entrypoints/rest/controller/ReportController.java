@@ -23,6 +23,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
+/**
+ * REST controller that manages CSV report generation and download.
+ * Report generation is asynchronous: a {@code POST} immediately returns HTTP 202 with a
+ * {@code PENDING} status, and clients poll the {@code GET /{id}/download} endpoint until
+ * the status transitions to {@code READY} or {@code FAILED}.
+ */
 @RestController
 @RequestMapping("/api/analytics/reports")
 @RequiredArgsConstructor
@@ -32,6 +38,14 @@ public class ReportController {
 
     private final RequestReportUseCase requestReportUseCase;
 
+    /**
+     * Accepts a CSV report generation request and queues it for asynchronous processing.
+     *
+     * @param filtersRequest the validated filter criteria for the report
+     * @param jwt            the JWT token of the authenticated user; its subject is used as the requester ID
+     * @return HTTP 202 Accepted with a {@link ReportRequestResponse} containing the report ID and
+     *         initial {@code PENDING} status
+     */
     @PostMapping
     @Operation(summary = "Requests CSV report generation")
     public ResponseEntity<ReportRequestResponse> requestReport(
@@ -43,6 +57,15 @@ public class ReportController {
                 .body(ReportRequestResponse.from(report));
     }
 
+    /**
+     * Returns the file URL for a completed CSV report.
+     * Responds with HTTP 202 while the report is still {@code PENDING}, HTTP 500 if it
+     * {@code FAILED}, and HTTP 200 with the file URL when it is {@code READY}.
+     *
+     * @param id  the UUID of the report request to check
+     * @param jwt the JWT token of the authenticated user; ownership of the report is verified
+     * @return HTTP 200 with the CSV file URL, HTTP 202 if still pending, or HTTP 500 on failure
+     */
     @GetMapping("/{id}/download")
     @Operation(summary = "Downloads the CSV when the report is READY")
     public ResponseEntity<String> downloadReport(

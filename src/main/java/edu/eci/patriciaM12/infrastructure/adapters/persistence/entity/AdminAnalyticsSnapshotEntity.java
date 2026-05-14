@@ -7,6 +7,11 @@ import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.util.UUID;
 
+/**
+ * JPA entity that maps to the {@code admin_analytics_snapshot} table.
+ * Each row represents a daily snapshot of platform-wide metrics computed for administrators,
+ * including active-user counts, total patches, top categories, and retention rate.
+ */
 @Entity
 @Table(name = "admin_analytics_snapshot")
 @Getter

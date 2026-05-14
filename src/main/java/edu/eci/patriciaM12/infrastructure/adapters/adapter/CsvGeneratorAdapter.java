@@ -14,12 +14,30 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+/**
+ * Infrastructure adapter that implements {@link CsvGeneratorPort} using OpenCSV 5.9.
+ * <p>
+ * Generates a CSV file on the local filesystem under the directory configured via
+ * {@code m12.reports.output-dir} (defaults to {@code /tmp/reports}).
+ * The output file name includes a timestamp with second precision to avoid collisions.
+ * </p>
+ */
 @Component
 public class CsvGeneratorAdapter implements CsvGeneratorPort {
 
     @Value("${m12.reports.output-dir:/tmp/reports}")
     private String outputDir;
 
+    /**
+     * Generates a CSV file from the supplied report filters and writes it to the output directory.
+     * The CSV contains one header row and one data row with the filter values used.
+     * Enum fields default to {@code "ALL"} when {@code null}.
+     *
+     * @param filters the report filter criteria to embed in the CSV
+     * @return the absolute file-system path of the generated CSV file
+     * @throws edu.eci.patriciaM12.domain.exceptions.CsvGenerationException if an I/O error occurs
+     *         during directory creation or file writing
+     */
     @Override
     public String generate(ReportFilters filters) {
         try {

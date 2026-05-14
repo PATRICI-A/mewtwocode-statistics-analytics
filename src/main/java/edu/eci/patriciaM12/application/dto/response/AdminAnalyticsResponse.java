@@ -6,6 +6,11 @@ import lombok.Value;
 
 import java.util.List;
 
+/**
+ * Response payload returned by the admin analytics panel endpoint.
+ * Each field is optional and is only serialised when it is not {@code null}, following the
+ * metric-type filter applied at query time.
+ */
 @Value
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
