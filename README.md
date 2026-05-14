@@ -47,6 +47,7 @@
 15. [Scaffolding y Código Documentado](#15-scaffolding-y-código-documentado)
 16. [Pipeline de Desarrollo](#16-pipeline-de-desarrollo)
 17. [Pipeline de PROD](#17-pipeline-de-prod)
+18. [Conexiones con otros servicios](#18-conexiones-con-otros-servicios)
 
 ---
 
@@ -100,20 +101,7 @@ Puerto: `8084` · Base de datos: `m12_analytics` · Paquete base: `edu.eci.patri
 
 El módulo de **Estadísticas y Analítica** provee visibilidad cuantitativa sobre la actividad del campus dentro del sistema PATRIC.IA. Opera como microservicio completamente independiente con su propia base de datos, su propio pipeline de despliegue y su propio ciclo de vida. Un fallo en este módulo nunca interrumpe el núcleo del sistema ni los demás módulos.
 
-<div align="center">
-
-| Campo | Descripción |
-|---|---|
-| **Nombre** | Estadísticas y Analítica |
-| **Sistema** | PATRIC.IA — EciBuddy |
-| **Equipo** | Mewtwo Code |
-| **Puerto** | `8084` |
-| **Base de datos** | `m12_analytics` (PostgreSQL 16) |
-| **Actores** | Estudiante autenticado · Administrador del sistema |
-
-</div>
-
-**Funcionalidades cubiertas:**
+Funcionalidades cubiertas:**
 
 <div align="center">
 
@@ -168,7 +156,7 @@ La generación de CSV ocurre en un **hilo separado** con `@Async` en `ReportServ
 <img src="docs/M12_Entidad.jpg" alt="Diagrama Entidad-Relación" width="700"/>
 </div>
 
-El módulo persiste tres tablas independientes en `m12_analytics`. No existen claves foráneas entre ellas ni hacia bases de datos externas. Las referencias a entidades de otros módulos (como `userId`) se almacenan como `UUID` sin constraint de integridad referencial, ya que el módulo de identidad tiene su propia base de datos.
+El módulo persiste tres tablas. No existen claves foráneas entre ellas ni hacia bases de datos externas. 
 
 ### Tabla: `student_dashboard_metrics`
 
@@ -243,26 +231,13 @@ El módulo aplica el patrón **Adapter** para resolver la incompatibilidad entre
 
 </div>
 
-**Modelos del dominio:**
-
-- **`StudentDashboardMetric`** — calcula `getParticipationLevel()` e `isStale()` directamente en el modelo.
-- **`AdminAnalyticsSnapshot`** — snapshot diario con restricción `UNIQUE` en `snapshotDate`.
-- **`ReportRequest`** — ciclo de vida `PENDING → READY / FAILED`. Verifica ownership con `requestedBy`.
-- **`ReportFilters`** — clase de valor inmutable con los filtros del reporte.
-- **`CategoryStat`** — clase de valor con `category`, `count` y `percentage`.
-- **`MetricEvent`** — DTO Kafka sin persistencia JPA.
-
-Enumeraciones: `ReportStatus` · `ParticipationLevel` · `PatchCategory` · `CampusZone` · `MetricType` · `MetricEventType`
-
 ---
 
 ## 8. Diagrama de Componentes
 
-> **Insertar aquí:** imagen del diagrama de componentes (`docs/diagrama_componentes_m12.png`)  
-> El archivo editable está en `docs/diagrama_componentes_m12.drawio` — abrir en [draw.io](https://app.diagrams.net) con **File → Open from → Device**.
 
 <div align="center">
-<img src="docs/diagrama_componentes_m12.png" alt="Diagrama de Componentes" width="900"/>
+<img src="docs/ComponentesEspM12.png" alt="Diagrama de Componentes" width="900"/>
 </div>
 
 El diagrama muestra la arquitectura hexagonal completa con los cuatro grupos de componentes del módulo y sus conexiones con los sistemas externos:
@@ -476,53 +451,24 @@ Los eventos publicados por los demás módulos de PATRIC.IA en el topic `metric_
 
 </div>
 
-El módulo **no publica** eventos — es exclusivamente consumidor. La retención de mensajes en Kafka garantiza que si el módulo cae, los eventos se procesan al recuperarse gracias al `auto-offset-reset=earliest`.
-
 ---
 
 ## 11. Evidencia de Pruebas Unitarias
-
-> **Insertar aquí:** screenshot del output de `./mvnw test` con todos los tests en verde.
+<div align="center">
+<img src="docs/tests.png" alt="Pipeline CD" width="700"/>
+</div>
 
 El proyecto cuenta con **tres clases de prueba** que cubren los tres servicios principales:
 
-### `DashboardServiceTest` — 9 casos
+- DashboardServiceTest — 9 casos
+- AdminAnalyticsServiceTest` — 3 casos
+- ReportServiceTest` — 6 casos
 
-```
-✔ retornaMetricaExistenteCuandoRepositorioLaEncuentra
-✔ retornaSnapshotVacioCuandoNoExistenMetricas
-✔ snapshotVacioTieneTodosLosDiasDeLaSemanaEnCero
-✔ retornaNivelNuevoCuandoTieneCeroParches
-✔ retornaNivelActivoCuandoTieneTresParches
-✔ retornaNivelConectorCuandoTieneDiezParches
-✔ retornaNivelEmbajadorCuandoTieneVeinteParches
-✔ isStaleRetornaFalseCuandoComputedAtEsReciente
-✔ isStaleRetornaTrueCuandoDesfaseSuperaCincoMinutos
-```
-
-### `AdminAnalyticsServiceTest` — 3 casos
-
-```
-✔ retornaTodasLasMetricasCuandoMetricTypeEsNull
-✔ retornaSoloUsuariosCuandoMetricTypeEsUsers
-✔ rechazaEndDateCuandoNoEsPosteriorAStartDate
-```
-
-### `ReportServiceTest` — 6 casos
-
-```
-✔ createReport_conFiltrosValidos_retornaPending
-✔ createReport_cuandoDateFromEsPosteriorADateTo_lanzaInvalidReportFiltersException
-✔ findById_cuandoExisteYEsDelUsuario_retornaReporte
-✔ findById_cuandoNoExiste_lanzaReportNotFoundException
-✔ findById_cuandoPerteneceAOtroUsuario_lanzaReportNotFoundException
-✔ reportConVolumenGrande_sinDatosSensibles_generaCSVCorrectamente
-```
 
 **Criterios de aceptación:**
 - Todos los tests en estado `PASSED`
 - Puertos mockeados con Mockito — sin acceso a infraestructura real
-- Casos felices y de error cubiertos por cada caso de uso
+- Happy paths y de error cubiertos por cada caso de uso
 - Aserciones fluidas con AssertJ
 
 **Cómo ejecutar:**
@@ -534,7 +480,7 @@ El proyecto cuenta con **tres clases de prueba** que cubren los tres servicios p
 
 ## 12. Análisis de Cobertura
 
-> **Insertar aquí:** screenshot del reporte JaCoCo (`target/site/jacoco/index.html`).
+
 
 **Cómo generar el reporte:**
 ```bash
@@ -582,19 +528,6 @@ cd mewtwocode-statistics-analytics
 docker compose up --build
 ```
 
-Los servicios se levantan con healthchecks: el backend espera a que PostgreSQL y Kafka estén saludables antes de arrancar (`depends_on: condition: service_healthy`).
-
-### Variables de entorno
-
-| Variable | Valor por defecto | Descripción |
-|---|---|---|
-| `SPRING_PROFILES_ACTIVE` | `dev` | Perfil activo: `dev` o `docker` |
-| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://postgres:5432/m12_analytics` | URL de PostgreSQL (perfil docker) |
-| `SPRING_DATASOURCE_USERNAME` | `patricia` | Usuario de PostgreSQL |
-| `SPRING_DATASOURCE_PASSWORD` | `patricia` | Contraseña de PostgreSQL |
-| `SPRING_KAFKA_BOOTSTRAP_SERVERS` | `kafka:9092` | Broker de Kafka (perfil docker) |
-| `SERVER_PORT` | `8084` | Puerto del servidor |
-
 ### Pruebas
 
 ```bash
@@ -612,20 +545,18 @@ Los servicios se levantan con healthchecks: el backend espera a que PostgreSQL y
 
 ## 14. Evidencia del Despliegue CI/CD
 
-> **Insertar aquí:** screenshot del pipeline de GitHub Actions en verde (Actions → CI — M12 Estadísticas y Analítica → última ejecución).
+<div align="center">
+<img src="docs/cd.png" alt="Pipeline CD" width="700"/>
+</div>
 
-El pipeline se define en `.github/workflows/ci.yml` y se ejecuta en cada push a `main`, `develop` o `feature/**` y en cada PR a `main` o `develop`.
+<div align="center">
+<img src="docs/ci.png" alt="Pipeline CI" width="700"/>
+</div>
 
-| Paso | Acción | Descripción |
-|---|---|---|
-| 1 | `actions/checkout@v4` | Clona el repositorio |
-| 2 | `actions/setup-java@v4` | Configura JDK 21 Temurin |
-| 3 | `actions/cache@v4` | Restaura caché de dependencias Maven |
-| 4 | `chmod +x mvnw` | Permisos al Maven Wrapper |
-| 5 | `./mvnw compile -q` | Verifica compilación |
-| 6 | `./mvnw verify` | Ejecuta tests + genera reporte JaCoCo |
-| 7 | `actions/upload-artifact@v4` | Publica reporte JaCoCo como artifact |
-| 8 | `docker build` | Construye imagen `m12-statistics-analytics:{sha}` |
+El pipeline se define en con los workflows de `ci.yml, cd.yml` se ejecuta en cada push a `main`, `develop` o `feature/**` y en cada PR a `main` o `develop`.
+
+### Link de despliegue en Azure
+https://mewtwocodestadisitcsanalytics-cfbwggf3dchjddhr.canadacentral-01.azurewebsites.net/swagger-ui/index.html#/
 
 ---
 
@@ -734,8 +665,12 @@ mewtwocode-statistics-analytics/
 │   ├── diagrama_componentes_m12.png                          # Diagrama de componentes especifico del sistema
 │   ├── ComponentesGeneral_PATRICIA.jpg                       # Diagrama general del sistema
 │   ├── M12_Clases.jpg                                        # Diagrama de clases
-│   └── M12_Entidad.jpg                                       # Diagrama entidad-relación
-│
+│   ├── M12_Entidad.jpg                                       # Diagrama entidad-relación
+│   ├── Secuencia1.jpg                                        # Diagrama de secuencia de funcionalidad
+│   ├── Secuencia2.jpg                                        # Diagrama de secuencia de funcionalidad
+│   ├── Secuencia3.jpg                                        # Diagrama de secuencia de funcionalidad
+│   ├── testjacoco.jpg                                        # Cobertura JaCoCo
+│   └── tests.jpg                                             # Pruebas unitarias                                                                                                                                                                                                
 ├── .github/workflows/
 │    ├── ci.yml                                               # Pipeline CI: compile → test → jacoco → docker
 │    ├── cd.yml                                               # Deploy JAR -> Azure App Service
@@ -778,11 +713,11 @@ docker build -t m12-statistics-analytics:${GITHUB_SHA} .
 **Estrategia de ramas (Git Flow):**
 
 ```
-main          ← merges desde release/* y hotfix/* únicamente (tags vX.Y.Z)
+main          
   └── develop ← integración continua
         └── feature/dashboard
         └── feature/panel-admin
-        └── feature/exportacion-csv
+        └── feature/reports
 ```
 
 **Convenciones de ramas:**
@@ -793,10 +728,7 @@ feature/[nombre-funcionalidad]   # máximo 50 caracteres
 **Convenciones de commits:**
 ```
 feat: nueva funcionalidad
-fix:  corrección de error
-docs: cambio en documentación
 ```
-
 ---
 
 ## 17. Pipeline de PROD
@@ -809,21 +741,25 @@ on:
     branches: [ main ]
 ```
 
-**Pasos adicionales respecto al pipeline de desarrollo:**
-
-| Paso | Descripción |
-|---|---|
-| Todos los pasos del pipeline de desarrollo | Compile → Test → JaCoCo → Docker build |
-| Tag de imagen con versión semántica | `m12-statistics-analytics:v{tag}` |
-| Push de imagen al registro de contenedores | Publicación de la imagen Docker |
-| Despliegue en EC2 | `docker compose up -d` en instancia EC2 t3.medium con perfil `docker` |
-
 **Reglas de protección de `main`:**
 - PR obligatorio con al menos 1 aprobación
 - Todos los checks del pipeline de desarrollo en verde antes del merge
 - Push directo a `main` bloqueado
 
 ---
+
+## 18. Conexiones con otros servicios
+
+El modulo cuenta conexiòn con cinco demàs servicios
+
+| Mòdulo          | Relaciòn                                                                |
+|-----------------|-------------------------------------------------------------------------|
+| Autenticaciòn   | Extrae el JWT para control de acceso                                    |
+| Parches         | Eventos para actualizar mètricas de participaciòn                       |
+| Perfil          | Analisis de perfiles para establecer mètricas con categorias de interes |
+| Geolocalizaciòn | Ubicaciones para calcular datos del mapa de campus                      |
+| Feed y Busqueda | Eventos del feed para mètricas de comportamiento                        |
+
 
 <div align="center">
 
@@ -834,7 +770,7 @@ on:
 ![Course](https://img.shields.io/badge/Course-DOSW-orange?style=for-the-badge)
 ![Year](https://img.shields.io/badge/Year-2026--1-blue?style=for-the-badge)
 
-> **PATRIC.IA Statistics & Analytics Service** — punto central de visibilidad de métricas del campus, con dashboards personalizados, analítica administrativa y exportación asíncrona de reportes CSV.
+> **PATRIC.IA Statistics & Analytics Service** 
 
 **Escuela Colombiana de Ingeniería Julio Garavito**
 
