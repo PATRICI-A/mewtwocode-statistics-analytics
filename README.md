@@ -504,7 +504,7 @@ El pipeline`.github/workflows/cd.yml` corre en cada push solamente a `main`:
 | Local (perfil dev) | http://localhost:8084/swagger-ui.html |
 | Docker Compose | http://localhost:8084/swagger-ui.html |
 | OpenAPI JSON | http://localhost:8084/v3/api-docs |
-
+| Azure App Service | https://mewtwocodestadisitcsanalytics-cfbwggf3dchjddhr.canadacentral-01.azurewebsites.net/swagger-ui/index.html#/|
 > Usar **Bearer JWT** en el botón "Authorize" de Swagger UI para probar endpoints protegidos.
 
 ---
