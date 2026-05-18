@@ -596,6 +596,7 @@ El flujo en `.github/workflows/ci.yml` se ejecuta en cada push a `main`, `develo
 
 </div>
 
+
 ---
 
 ## 13. Contribuciones y Metodología
