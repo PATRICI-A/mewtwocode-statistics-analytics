@@ -46,6 +46,7 @@ public class ReportRequestMapper {
                 .filters(filters)
                 .status(entity.getStatus())
                 .fileUrl(entity.getFileUrl())
+                .createdAt(entity.getCreatedAt())
                 .build();
     }
 

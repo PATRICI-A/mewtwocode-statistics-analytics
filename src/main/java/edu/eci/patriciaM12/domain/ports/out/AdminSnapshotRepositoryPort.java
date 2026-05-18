@@ -8,8 +8,8 @@ import java.util.Optional;
 
 /**
  * Output port (secondary port) that abstracts persistence operations for
- * {@link AdminAnalyticsSnapshot} records.  Infrastructure adapters (e.g., MongoDB or
- * JPA repositories) must implement this interface to satisfy the domain's storage needs.
+ * {@link AdminAnalyticsSnapshot} records (RF-18).  Infrastructure adapters (e.g., JPA
+ * repositories) must implement this interface to satisfy the domain's storage needs.
  */
 public interface AdminSnapshotRepositoryPort {
 
@@ -30,6 +30,18 @@ public interface AdminSnapshotRepositoryPort {
      * @return list of matching snapshots; may be empty if none exist in the range
      */
     List<AdminAnalyticsSnapshot> findByDateRange(LocalDate dateFrom, LocalDate dateTo);
+
+    /**
+     * Retrieves admin analytics snapshots within the given date range filtered by faculty
+     * name (RF-18 RN-18.10).  When {@code facultyFilter} is {@code null} or blank, the
+     * result is equivalent to {@link #findByDateRange(LocalDate, LocalDate)}.
+     *
+     * @param dateFrom      inclusive start date of the range
+     * @param dateTo        inclusive end date of the range
+     * @param facultyFilter the faculty name to restrict results; {@code null} means all faculties
+     * @return list of matching snapshots; may be empty if none exist
+     */
+    List<AdminAnalyticsSnapshot> findByDateRangeAndFaculty(LocalDate dateFrom, LocalDate dateTo, String facultyFilter);
 
     /**
      * Persists a new or updated {@link AdminAnalyticsSnapshot}.

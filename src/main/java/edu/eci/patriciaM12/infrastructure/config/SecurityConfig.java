@@ -1,5 +1,6 @@
 package edu.eci.patriciaM12.infrastructure.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -11,9 +12,13 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
@@ -39,6 +44,16 @@ import java.util.stream.Stream;
 @EnableMethodSecurity
 public class SecurityConfig {
 
+    @Value("${jwt.secret}")
+    private String jwtSecret;
+
+    @Bean
+    public JwtDecoder jwtDecoder() {
+        SecretKeySpec key = new SecretKeySpec(
+                jwtSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+        return NimbusJwtDecoder.withSecretKey(key).build();
+    }
+
     private static final String[] SWAGGER_PATHS = {
             "/swagger-ui.html",
             "/swagger-ui/**",
@@ -46,10 +61,13 @@ public class SecurityConfig {
             "/v3/api-docs/**"
     };
 
+    private static final String ADMIN_PATH = "/api/v1/analytics/admin/**";
+    private static final String INSTITUTIONAL_PATH = "/api/v1/analytics/institutional/**";
+
     /**
-     * Registers a permissive security filter chain for the admin analytics routes, active only
-     * in the {@code dev} Spring profile.  All requests to {@code /api/v1/analytics/admin/**}
-     * are permitted without authentication.
+     * Registers permissive security filter chains for the admin and institutional analytics routes,
+     * active only in the {@code dev} Spring profile.  All requests to those paths are permitted
+     * without authentication, simplifying local development.
      *
      * @param http the {@link HttpSecurity} builder provided by Spring Security
      * @return the configured {@link SecurityFilterChain}
@@ -60,7 +78,7 @@ public class SecurityConfig {
     @Order(1)
     public SecurityFilterChain devAdminAnalyticsFilterChain(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/api/v1/analytics/admin/**")
+                .securityMatcher(ADMIN_PATH, INSTITUTIONAL_PATH)
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
@@ -84,7 +102,8 @@ public class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(SWAGGER_PATHS).permitAll()
-                        .requestMatchers("/api/v1/analytics/admin/**").hasRole("ADMINISTRADOR")
+                        .requestMatchers(ADMIN_PATH).hasRole("ADMINISTRADOR")
+                        .requestMatchers(INSTITUTIONAL_PATH).hasAnyRole("ADMINISTRADOR", "BIENESTAR")
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt ->
                         jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));

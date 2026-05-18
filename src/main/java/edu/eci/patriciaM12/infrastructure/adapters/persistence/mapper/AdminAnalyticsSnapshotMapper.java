@@ -32,6 +32,7 @@ public class AdminAnalyticsSnapshotMapper {
                 .peakHours(Map.of())
                 .retentionRate(entity.getRetentionRate())
                 .generatedAt(entity.getGeneratedAt())
+                .faculty(entity.getFaculty())
                 .build();
     }
 
@@ -51,6 +52,7 @@ public class AdminAnalyticsSnapshotMapper {
                 .topCategories("[]")
                 .retentionRate(domain.getRetentionRate())
                 .generatedAt(domain.getGeneratedAt())
+                .faculty(domain.getFaculty())
                 .build();
     }
 }

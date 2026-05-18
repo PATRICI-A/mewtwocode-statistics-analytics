@@ -7,13 +7,14 @@ import edu.eci.patriciaM12.infrastructure.adapters.persistence.repository.Report
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 /**
  * Infrastructure adapter that implements {@link ReportRequestRepositoryPort} using Spring Data JPA.
  * Bridges the domain port with {@link ReportRequestJpaRepository} and handles entity-to-domain
- * conversion via {@link ReportRequestMapper}.
+ * conversion via {@link ReportRequestMapper} (RF-19).
  */
 @Component
 @RequiredArgsConstructor
@@ -42,5 +43,20 @@ public class ReportRequestRepositoryAdapter implements ReportRequestRepositoryPo
     @Override
     public Optional<ReportRequest> findById(UUID id) {
         return jpaRepository.findById(id).map(mapper::toDomain);
+    }
+
+    /**
+     * Returns all report requests submitted by the given user, ordered by creation date descending.
+     * Used to populate the report history list (RF-19 RN-19.5).
+     *
+     * @param requestedBy the UUID of the user whose requests are to be retrieved
+     * @return list of domain report requests; may be empty; never {@code null}
+     */
+    @Override
+    public List<ReportRequest> findAllByRequestedBy(UUID requestedBy) {
+        return jpaRepository.findByRequestedByOrderByCreatedAtDesc(requestedBy)
+                .stream()
+                .map(mapper::toDomain)
+                .toList();
     }
 }

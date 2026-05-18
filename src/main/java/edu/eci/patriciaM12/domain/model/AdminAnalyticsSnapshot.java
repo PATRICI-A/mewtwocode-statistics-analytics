@@ -48,4 +48,10 @@ public class AdminAnalyticsSnapshot {
 
     /** Timestamp at which this snapshot was computed and stored. */
     private LocalDateTime generatedAt;
+
+    /**
+     * Optional faculty name used to segment snapshots by academic faculty (RF-18 RN-18.10).
+     * {@code null} indicates a platform-wide (all-faculties) snapshot.
+     */
+    private String faculty;
 }

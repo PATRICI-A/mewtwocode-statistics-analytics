@@ -2,6 +2,8 @@ package edu.eci.patriciaM12.infrastructure.adapters.persistence.repository;
 
 import edu.eci.patriciaM12.infrastructure.adapters.persistence.entity.AdminAnalyticsSnapshotEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -10,7 +12,8 @@ import java.util.UUID;
 
 /**
  * Spring Data JPA repository for {@link AdminAnalyticsSnapshotEntity}.
- * Provides derived query methods for date-based lookup of admin analytics snapshots.
+ * Provides derived query methods and JPQL queries for date-based and faculty-filtered
+ * lookup of admin analytics snapshots (RF-18).
  */
 public interface AdminSnapshotJpaRepository extends JpaRepository<AdminAnalyticsSnapshotEntity, UUID> {
 
@@ -29,5 +32,25 @@ public interface AdminSnapshotJpaRepository extends JpaRepository<AdminAnalytics
      * @param dateTo   the end of the range (inclusive)
      * @return a list of matching entities ordered chronologically; never {@code null}
      */
-    List<AdminAnalyticsSnapshotEntity> findBySnapshotDateBetweenOrderBySnapshotDateAsc(LocalDate dateFrom, LocalDate dateTo);
+    List<AdminAnalyticsSnapshotEntity> findBySnapshotDateBetweenOrderBySnapshotDateAsc(
+            LocalDate dateFrom, LocalDate dateTo);
+
+    /**
+     * Finds snapshots within the given date range optionally filtered by faculty name (RF-18 RN-18.10).
+     * When {@code faculty} is {@code null} the query behaves identically to
+     * {@link #findBySnapshotDateBetweenOrderBySnapshotDateAsc}.
+     *
+     * @param dateFrom the start of the range (inclusive)
+     * @param dateTo   the end of the range (inclusive)
+     * @param faculty  the faculty name to filter by; {@code null} means all faculties
+     * @return a chronologically ordered list of matching entities; never {@code null}
+     */
+    @Query("SELECT s FROM AdminAnalyticsSnapshotEntity s " +
+            "WHERE s.snapshotDate BETWEEN :dateFrom AND :dateTo " +
+            "AND (:faculty IS NULL OR s.faculty = :faculty) " +
+            "ORDER BY s.snapshotDate ASC")
+    List<AdminAnalyticsSnapshotEntity> findByDateRangeAndFaculty(
+            @Param("dateFrom") LocalDate dateFrom,
+            @Param("dateTo") LocalDate dateTo,
+            @Param("faculty") String faculty);
 }

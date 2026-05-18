@@ -10,7 +10,8 @@ import java.util.UUID;
 /**
  * JPA entity that maps to the {@code admin_analytics_snapshot} table.
  * Each row represents a daily snapshot of platform-wide metrics computed for administrators,
- * including active-user counts, total patches, top categories, and retention rate.
+ * including active-user counts, total patches, top categories, retention rate, and optional
+ * faculty-level segmentation (RF-18 RN-18.10).
  */
 @Entity
 @Table(name = "admin_analytics_snapshot")
@@ -25,8 +26,9 @@ public class AdminAnalyticsSnapshotEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "snapshot_date", nullable = false, unique = true)
+    @Column(name = "snapshot_date", nullable = false)
     private LocalDate snapshotDate;
+
 
     @Column(name = "total_patches", nullable = false)
     private int totalPatches;
@@ -42,4 +44,11 @@ public class AdminAnalyticsSnapshotEntity {
 
     @Column(name = "generated_at", nullable = false)
     private LocalDateTime generatedAt;
+
+    /**
+     * Optional faculty name used to segment snapshots by academic faculty (RF-18 RN-18.10).
+     * {@code null} indicates a platform-wide (all-faculties) snapshot.
+     */
+    @Column(name = "faculty")
+    private String faculty;
 }

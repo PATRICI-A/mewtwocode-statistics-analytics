@@ -37,6 +37,8 @@ jobs:
 
       - name: Ejecutar tests y generar reporte JaCoCo
         run: ./mvnw verify
+        env:
+          JWT_SECRET_TEST: ${{ secrets.JWT_SECRET_TEST }}
 
       - name: Publicar reporte JaCoCo
         uses: actions/upload-artifact@v4
@@ -47,3 +49,17 @@ jobs:
 
       - name: Construir imagen Docker
         run: docker build -t m12-statistics-analytics:${{ github.sha }} .
+
+      - name: Publicar reporte Surefire
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: surefire-report
+          path: target/surefire-reports/
+
+      - name: Publicar JAR para despliegue
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-jar
+          path: target/*.jar
+          retention-days: 1

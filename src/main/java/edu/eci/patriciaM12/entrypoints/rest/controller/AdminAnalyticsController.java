@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDate;
 
 /**
- * REST controller that exposes the admin analytics panel endpoint.
+ * REST controller that exposes the admin analytics panel endpoint (RF-18).
  * All routes under {@code /api/v1/analytics/admin} require the {@code ADMINISTRADOR} role
  * (bypassed in the {@code dev} Spring profile for convenience).
  */
@@ -34,13 +34,17 @@ public class AdminAnalyticsController {
 
     /**
      * Returns the global analytics panel for administrators.
+     * <p>
      * When {@code startDate} or {@code endDate} are omitted the active academic semester is used.
      * When {@code metricType} is omitted all metric categories are included in the response.
+     * When {@code facultyFilter} is omitted no faculty restriction is applied (RN-18.10).
+     * </p>
      *
      * @param authorization the Bearer token forwarded from the gateway (hidden from Swagger UI)
      * @param startDate     optional start of the query window (ISO date)
      * @param endDate       optional end of the query window (ISO date)
      * @param metricType    optional metric filter; {@code null} means all metrics
+     * @param facultyFilter optional faculty name to restrict analytics scope; {@code null} means all faculties
      * @return HTTP 200 with the populated {@link AdminAnalyticsResponse}
      */
     @GetMapping
@@ -49,7 +53,9 @@ public class AdminAnalyticsController {
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String authorization,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-            @RequestParam(required = false) MetricType metricType) {
-        return ResponseEntity.ok(getAdminAnalyticsUseCase.getPanel(startDate, endDate, metricType));
+            @RequestParam(required = false) MetricType metricType,
+            @RequestParam(required = false) String facultyFilter) {
+        return ResponseEntity.ok(
+                getAdminAnalyticsUseCase.getPanel(startDate, endDate, metricType, facultyFilter));
     }
 }

@@ -14,7 +14,7 @@ public enum PatchCategory {
     /** Physical sport or outdoor recreational activity. */
     SPORTS,
 
-    /** Cultural, artistic, or music-related activity. */
+    /** Cultural or artistic activity. */
     CULTURE,
 
     /** Video game or board game session. */
@@ -22,6 +22,9 @@ public enum PatchCategory {
 
     /** Food, cooking, or dining-related activity. */
     FOOD,
+
+    /** Music performance, rehearsal, or listening activity. */
+    MUSIC,
 
     /** Any activity that does not fit the above categories. */
     OTHER

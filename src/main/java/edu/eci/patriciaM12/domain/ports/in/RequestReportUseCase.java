@@ -1,8 +1,10 @@
 package edu.eci.patriciaM12.domain.ports.in;
 
+import edu.eci.patriciaM12.application.dto.response.ReportHistoryDTO;
 import edu.eci.patriciaM12.domain.model.ReportRequest;
 import edu.eci.patriciaM12.domain.model.ReportFilters;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -35,4 +37,13 @@ public interface RequestReportUseCase {
      *         exists with the given {@code reportId}
      */
     ReportRequest findById(UUID reportId, UUID requestedBy);
+
+    /**
+     * Returns the report history for the specified user (RF-19 RN-19.5).
+     * Only {@code READY} reports created within the last 30 days are included.
+     *
+     * @param userId the identifier of the user whose report history to retrieve
+     * @return list of recent completed reports; may be empty, never {@code null}
+     */
+    List<ReportHistoryDTO> getHistory(UUID userId);
 }
