@@ -12,6 +12,7 @@
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.0-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?style=for-the-badge&logo=postgresql&logoColor=white)
 
+
 ### Infraestructura & Calidad
 
 ![Kafka](https://img.shields.io/badge/Apache%20Kafka-Confluent%207.6-231F20?style=for-the-badge&logo=apache-kafka&logoColor=white)
