@@ -7,9 +7,21 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Spring-managed mapper that converts between {@link AdminAnalyticsSnapshotEntity} (JPA layer)
+ * and {@link AdminAnalyticsSnapshot} (domain layer).
+ * The {@code topCategories} and {@code peakHours} fields are not yet persisted in the entity
+ * and default to empty collections during conversion.
+ */
 @Component
 public class AdminAnalyticsSnapshotMapper {
 
+    /**
+     * Converts a JPA entity into its corresponding domain model.
+     *
+     * @param entity the persistence entity to convert
+     * @return the equivalent domain {@link AdminAnalyticsSnapshot}
+     */
     public AdminAnalyticsSnapshot toDomain(AdminAnalyticsSnapshotEntity entity) {
         return AdminAnalyticsSnapshot.builder()
                 .id(entity.getId())
@@ -20,9 +32,17 @@ public class AdminAnalyticsSnapshotMapper {
                 .peakHours(Map.of())
                 .retentionRate(entity.getRetentionRate())
                 .generatedAt(entity.getGeneratedAt())
+                .faculty(entity.getFaculty())
                 .build();
     }
 
+    /**
+     * Converts a domain model into its corresponding JPA entity.
+     * The {@code topCategories} column is serialised as the literal string {@code "[]"}.
+     *
+     * @param domain the domain snapshot to convert
+     * @return the equivalent {@link AdminAnalyticsSnapshotEntity} ready for persistence
+     */
     public AdminAnalyticsSnapshotEntity toEntity(AdminAnalyticsSnapshot domain) {
         return AdminAnalyticsSnapshotEntity.builder()
                 .id(domain.getId())
@@ -32,6 +52,7 @@ public class AdminAnalyticsSnapshotMapper {
                 .topCategories("[]")
                 .retentionRate(domain.getRetentionRate())
                 .generatedAt(domain.getGeneratedAt())
+                .faculty(domain.getFaculty())
                 .build();
     }
 }

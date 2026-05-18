@@ -11,6 +11,8 @@ import edu.eci.patriciaM12.domain.model.enums.MetricType;
 import edu.eci.patriciaM12.domain.model.enums.PatchCategory;
 import edu.eci.patriciaM12.domain.model.enums.ReportStatus;
 import edu.eci.patriciaM12.domain.ports.in.GetAdminAnalyticsUseCase;
+import edu.eci.patriciaM12.domain.ports.in.GetInteractionAnalyticsUseCase;
+import edu.eci.patriciaM12.domain.ports.in.GetSocialIndicatorsUseCase;
 import edu.eci.patriciaM12.domain.ports.in.GetStudentDashboardUseCase;
 import edu.eci.patriciaM12.domain.ports.in.RequestReportUseCase;
 import edu.eci.patriciaM12.entrypoints.rest.controller.AdminAnalyticsController;
@@ -39,7 +41,9 @@ class ControllerTest {
     @Test
     void dashboardControllerRetornaMetricasDelUsuarioAutenticado() {
         GetStudentDashboardUseCase useCase = mock(GetStudentDashboardUseCase.class);
-        DashboardController controller = new DashboardController(useCase);
+        GetSocialIndicatorsUseCase socialUseCase = mock(GetSocialIndicatorsUseCase.class);
+        GetInteractionAnalyticsUseCase interactionUseCase = mock(GetInteractionAnalyticsUseCase.class);
+        DashboardController controller = new DashboardController(useCase, socialUseCase, interactionUseCase);
         UUID userId = UUID.randomUUID();
         Jwt jwt = jwtFor(userId);
         Map<DayOfWeek, Integer> weekly = new EnumMap<>(DayOfWeek.class);
@@ -149,10 +153,10 @@ class ControllerTest {
         AdminAnalyticsResponse expected = AdminAnalyticsResponse.builder()
                 .matchSuccessRate(0.4)
                 .build();
-        when(useCase.getPanel(start, end, MetricType.MATCHES)).thenReturn(expected);
+        when(useCase.getPanel(start, end, MetricType.MATCHES, null)).thenReturn(expected);
 
         ResponseEntity<AdminAnalyticsResponse> response =
-                controller.getAdminAnalyticsPanel("Bearer token", start, end, MetricType.MATCHES);
+                controller.getAdminAnalyticsPanel("Bearer token", start, end, MetricType.MATCHES, null);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isSameAs(expected);

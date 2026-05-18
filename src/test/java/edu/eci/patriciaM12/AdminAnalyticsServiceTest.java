@@ -19,6 +19,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -39,9 +40,10 @@ class AdminAnalyticsServiceTest {
         LocalDate startDate = LocalDate.now().withDayOfMonth(1);
         LocalDate endDate = startDate.plusDays(1);
         AdminAnalyticsSnapshot snapshot = buildSnapshot(startDate, 12, 4);
+        when(adminSnapshotRepository.findByDateRange(any(), any())).thenReturn(List.of());
         when(adminSnapshotRepository.findByDateRange(startDate, endDate)).thenReturn(List.of(snapshot));
 
-        AdminAnalyticsResponse response = service.getPanel(startDate, endDate, null);
+        AdminAnalyticsResponse response = service.getPanel(startDate, endDate, null, null);
 
         assertThat(response.getActiveUsers().getTimeSeries()).containsEntry(startDate, 12);
         assertThat(response.getParcheStats().getTotal()).isEqualTo(4);
@@ -55,9 +57,10 @@ class AdminAnalyticsServiceTest {
         LocalDate startDate = LocalDate.now().withDayOfMonth(1);
         LocalDate endDate = startDate.plusDays(1);
         AdminAnalyticsSnapshot snapshot = buildSnapshot(startDate, 8, 2);
+        when(adminSnapshotRepository.findByDateRange(any(), any())).thenReturn(List.of());
         when(adminSnapshotRepository.findByDateRange(startDate, endDate)).thenReturn(List.of(snapshot));
 
-        AdminAnalyticsResponse response = service.getPanel(startDate, endDate, MetricType.USERS);
+        AdminAnalyticsResponse response = service.getPanel(startDate, endDate, MetricType.USERS, null);
 
         assertThat(response.getActiveUsers()).isNotNull();
         assertThat(response.getParcheStats()).isNull();
@@ -70,9 +73,9 @@ class AdminAnalyticsServiceTest {
     void rechazaEndDateCuandoNoEsPosteriorAStartDate() {
         LocalDate startDate = LocalDate.now().withDayOfMonth(1);
 
-        assertThatThrownBy(() -> service.getPanel(startDate, startDate, null))
+        assertThatThrownBy(() -> service.getPanel(startDate, startDate, null, null))
                 .isInstanceOf(InvalidReportFiltersException.class)
-                .hasMessage("endDate debe ser posterior a startDate.");
+                .hasMessage("endDate must be after startDate.");
     }
 
     private AdminAnalyticsSnapshot buildSnapshot(LocalDate snapshotDate, int activeUsers, int totalPatches) {

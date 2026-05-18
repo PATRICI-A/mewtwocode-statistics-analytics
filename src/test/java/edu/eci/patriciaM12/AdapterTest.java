@@ -21,6 +21,7 @@ import edu.eci.patriciaM12.infrastructure.adapters.persistence.mapper.StudentMet
 import edu.eci.patriciaM12.infrastructure.adapters.persistence.repository.AdminSnapshotJpaRepository;
 import edu.eci.patriciaM12.infrastructure.adapters.persistence.repository.ReportRequestJpaRepository;
 import edu.eci.patriciaM12.infrastructure.adapters.persistence.repository.StudentMetricsJpaRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -37,6 +38,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -76,79 +78,97 @@ class AdapterTest {
 
         assertThatThrownBy(() -> adapter.generate(filters))
                 .isInstanceOf(CsvGenerationException.class)
-                .hasMessageContaining("Error generando reporte CSV");
+                .hasMessageContaining("Error generating CSV report");
     }
 
     @Test
     void reportRequestRepositoryAdapterGuardaYBuscaPorId() {
         ReportRequestJpaRepository repository = mock(ReportRequestJpaRepository.class);
-        ReportRequestMapper mapper = mock(ReportRequestMapper.class);
+        ReportRequestMapper mapper = new ReportRequestMapper(new ObjectMapper());
         ReportRequestRepositoryAdapter adapter = new ReportRequestRepositoryAdapter(repository, mapper);
         UUID reportId = UUID.randomUUID();
         ReportRequest domain = ReportRequest.builder()
                 .id(reportId)
                 .status(ReportStatus.PENDING)
                 .build();
-        ReportRequestEntity entity = ReportRequestEntity.builder()
+        ReportRequestEntity savedEntity = ReportRequestEntity.builder()
                 .id(reportId)
                 .status(ReportStatus.PENDING)
+                .createdAt(LocalDateTime.now())
                 .build();
-        when(mapper.toEntity(domain)).thenReturn(entity);
-        when(repository.save(entity)).thenReturn(entity);
-        when(mapper.toDomain(entity)).thenReturn(domain);
-        when(repository.findById(reportId)).thenReturn(Optional.of(entity));
+        when(repository.save(any())).thenReturn(savedEntity);
+        when(repository.findById(reportId)).thenReturn(Optional.of(savedEntity));
 
-        assertThat(adapter.save(domain)).isSameAs(domain);
-        assertThat(adapter.findById(reportId)).containsSame(domain);
+        ReportRequest saved = adapter.save(domain);
+        assertThat(saved.getId()).isEqualTo(reportId);
+        assertThat(saved.getStatus()).isEqualTo(ReportStatus.PENDING);
+        Optional<ReportRequest> found = adapter.findById(reportId);
+        assertThat(found).isPresent();
+        assertThat(found.get().getId()).isEqualTo(reportId);
     }
 
     @Test
     void studentMetricsRepositoryAdapterGuardaYBuscaPorUsuario() {
         StudentMetricsJpaRepository repository = mock(StudentMetricsJpaRepository.class);
-        StudentMetricsMapper mapper = mock(StudentMetricsMapper.class);
+        StudentMetricsMapper mapper = new StudentMetricsMapper(new ObjectMapper());
         StudentMetricsRepositoryAdapter adapter = new StudentMetricsRepositoryAdapter(repository, mapper);
         UUID userId = UUID.randomUUID();
         StudentDashboardMetric domain = StudentDashboardMetric.builder()
                 .userId(userId)
+                .patchesAttended(3)
                 .weeklyActivity(new EnumMap<>(DayOfWeek.class))
+                .computedAt(LocalDateTime.now())
                 .build();
-        StudentDashboardMetricEntity entity = StudentDashboardMetricEntity.builder()
+        StudentDashboardMetricEntity savedEntity = StudentDashboardMetricEntity.builder()
                 .userId(userId)
+                .patchesAttended(3)
                 .build();
-        when(mapper.toEntity(domain)).thenReturn(entity);
-        when(repository.save(entity)).thenReturn(entity);
-        when(mapper.toDomain(entity)).thenReturn(domain);
-        when(repository.findByUserId(userId)).thenReturn(Optional.of(entity));
+        when(repository.save(any())).thenReturn(savedEntity);
+        when(repository.findByUserId(userId)).thenReturn(Optional.of(savedEntity));
 
-        assertThat(adapter.save(domain)).isSameAs(domain);
-        assertThat(adapter.findByUserId(userId)).containsSame(domain);
+        StudentDashboardMetric saved = adapter.save(domain);
+        assertThat(saved.getUserId()).isEqualTo(userId);
+        assertThat(saved.getPatchesAttended()).isEqualTo(3);
+        Optional<StudentDashboardMetric> found = adapter.findByUserId(userId);
+        assertThat(found).isPresent();
+        assertThat(found.get().getUserId()).isEqualTo(userId);
     }
 
     @Test
     void adminSnapshotRepositoryAdapterGuardaYConsultaRangos() {
         AdminSnapshotJpaRepository repository = mock(AdminSnapshotJpaRepository.class);
-        AdminAnalyticsSnapshotMapper mapper = mock(AdminAnalyticsSnapshotMapper.class);
+        AdminAnalyticsSnapshotMapper mapper = new AdminAnalyticsSnapshotMapper();
         AdminSnapshotRepositoryAdapter adapter = new AdminSnapshotRepositoryAdapter(repository, mapper);
         UUID snapshotId = UUID.randomUUID();
         LocalDate date = LocalDate.of(2026, 2, 1);
         AdminAnalyticsSnapshot domain = AdminAnalyticsSnapshot.builder()
                 .id(snapshotId)
                 .snapshotDate(date)
+                .activeUsers(10)
+                .totalPatches(5)
                 .generatedAt(LocalDateTime.now())
                 .build();
-        AdminAnalyticsSnapshotEntity entity = AdminAnalyticsSnapshotEntity.builder()
+        AdminAnalyticsSnapshotEntity savedEntity = AdminAnalyticsSnapshotEntity.builder()
                 .id(snapshotId)
                 .snapshotDate(date)
+                .activeUsers(10)
+                .totalPatches(5)
+                .topCategories("[]")
+                .generatedAt(LocalDateTime.now())
                 .build();
-        when(mapper.toEntity(domain)).thenReturn(entity);
-        when(repository.save(entity)).thenReturn(entity);
-        when(mapper.toDomain(entity)).thenReturn(domain);
-        when(repository.findBySnapshotDate(date)).thenReturn(Optional.of(entity));
+        when(repository.save(any())).thenReturn(savedEntity);
+        when(repository.findBySnapshotDate(date)).thenReturn(Optional.of(savedEntity));
         when(repository.findBySnapshotDateBetweenOrderBySnapshotDateAsc(date, date.plusDays(1)))
-                .thenReturn(List.of(entity));
+                .thenReturn(List.of(savedEntity));
 
-        assertThat(adapter.save(domain)).isSameAs(domain);
-        assertThat(adapter.findByDate(date)).containsSame(domain);
-        assertThat(adapter.findByDateRange(date, date.plusDays(1))).containsExactly(domain);
+        AdminAnalyticsSnapshot saved = adapter.save(domain);
+        assertThat(saved.getId()).isEqualTo(snapshotId);
+        assertThat(saved.getActiveUsers()).isEqualTo(10);
+        Optional<AdminAnalyticsSnapshot> found = adapter.findByDate(date);
+        assertThat(found).isPresent();
+        assertThat(found.get().getSnapshotDate()).isEqualTo(date);
+        List<AdminAnalyticsSnapshot> range = adapter.findByDateRange(date, date.plusDays(1));
+        assertThat(range).hasSize(1);
+        assertThat(range.get(0).getTotalPatches()).isEqualTo(5);
     }
 }

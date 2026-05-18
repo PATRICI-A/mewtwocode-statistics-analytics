@@ -217,7 +217,7 @@ Enumeraciones: `ParticipationLevel` (NUEVO <3, ACTIVO 3-9, CONECTOR 10-19, EMBAJ
 ## 7. Diagrama de Componentes
 
 <div align="center">
-<img src="docs/ComponentesEspM12.jpg" alt="Diagrama de Componentes" width="700"/>
+<img src="docs/ComponentesGeneral_PATRICIA.jpg" alt="Diagrama de Componentes" width="700"/>
 </div>
 
 | Componente | Tipo | Interfaz |
@@ -389,18 +389,20 @@ M12 es **consumidor puro** de Kafka. No publica eventos.
 
 ## 11. Evidencia de Pruebas
 
-<div align="center">
-<img src="docs/tests.png" alt="Evidencia" width="700"/>
-</div>
-
 ### Clases de prueba implementadas
 
 ```
 src/test/java/edu/eci/patriciaM12/
- ├── DashboardServiceTest.java 
- ├── AdminAnalyticsServices.java
- ├── ReportServicesTest.java
- └── 
+└── DashboardServiceTest.java
+    ├── retornaMetricaExistenteCuandoRepositorioLaEncuentra
+    ├── retornaSnapshotVacioCuandoNoExistenMetricas
+    ├── snapshotVacioTieneTodosLosDiasDeLaSemanaEnCero
+    ├── retornaNivelNuevoCuandoTieneCeroParches
+    ├── retornaNivelActivoCuandoTieneTresParches
+    ├── retornaNivelConectorCuandoTieneDiezParches
+    ├── retornaNivelEmbajadorCuandoTieneVeinteParches
+    ├── isStaleRetornaFalseCuandoComputedAtEsReciente
+    └── isStaleRetornaTrueCuandoDesfaseSuperaCincoMinutos
 ```
 
 ### Cómo ejecutar las pruebas
@@ -419,13 +421,13 @@ src/test/java/edu/eci/patriciaM12/
 ./mvnw test -Dtest=DashboardServiceTest
 ```
 
+
 ---
 
 ## 12. Evidencia de Cobertura
 
 
-Cobertura mínima esperada : > 80%.
-
+Cobertura mínima esperada por clase: `DashboardService` > 80%.
 
 ---
 
@@ -450,8 +452,6 @@ git clone https://github.com/<org>/mewtwocode-statistics-analytics.git
 **URL:** `http://localhost:8084`
 **Swagger UI:** `http://localhost:8084/swagger-ui.html`
 **H2 Console:** `http://localhost:8084/h2-console`
-**Azure Despliegue** `https://mewtwocodestadisitcsanalytics-cfbwggf3dchjddhr.canadacentral-01.azurewebsites.net/swagger-ui/index.html#/`
-
 
 ### Opción 2: Docker Compose (perfil `docker`, PostgreSQL + Kafka)
 
@@ -476,16 +476,6 @@ docker compose up --build
 
 El pipeline `.github/workflows/ci.yml` corre en cada push a `main`, `develop` o `feature/**`:
 
-<div align="center">
-<img src="docs/ci.png" alt="Pipeline CI" width="600"/>
-</div>
-
-El pipeline`.github/workflows/cd.yml` corre en cada push solamente a `main`:
-
-<div align="center">
-<img src="docs/cd.png" alt="Pipeline CD" width="600"/>
-</div>
-
 1. **Checkout** — `actions/checkout@v4`
 2. **Java 21** — `actions/setup-java@v4` (Temurin)
 3. **Cache Maven** — dependencias cacheadas
@@ -504,7 +494,7 @@ El pipeline`.github/workflows/cd.yml` corre en cada push solamente a `main`:
 | Local (perfil dev) | http://localhost:8084/swagger-ui.html |
 | Docker Compose | http://localhost:8084/swagger-ui.html |
 | OpenAPI JSON | http://localhost:8084/v3/api-docs |
-| Azure App Service | https://mewtwocodestadisitcsanalytics-cfbwggf3dchjddhr.canadacentral-01.azurewebsites.net/swagger-ui/index.html#/|
+
 > Usar **Bearer JWT** en el botón "Authorize" de Swagger UI para probar endpoints protegidos.
 
 ---
@@ -606,15 +596,9 @@ mewtwocode-statistics-analytics/
 │           └── DashboardServiceTest.java
 │
 ├── docs/
-│   ├── cd.png
-│   ├── ci.png
-│   ├── ComponentesEspM12.jpg
+│   ├── ComponentesGeneral_PATRICIA.jpg
 │   ├── M12_Clases.jpg
-│   ├── M1_Entidad.jpg
-│   ├── Secuencia1.jpg
-│   ├── Secuencia2.jpg
-│   ├── Secuencia3.jpg
-│   └── tests.jpg
+│   └── M12_Entidad.jpg
 │
 ├── .github/workflows/ci.yml
 ├── Dockerfile
@@ -796,6 +780,3 @@ Ejemplos: `feature/dashboard`, `feature/panel-admin`, `feature/exportacion-csv`
 **Escuela Colombiana de Ingeniería Julio Garavito**
 
 </div>
-
-
-
