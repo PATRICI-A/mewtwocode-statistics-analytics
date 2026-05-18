@@ -11,6 +11,13 @@ import java.time.DayOfWeek;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Spring-managed mapper that converts between {@link StudentDashboardMetricEntity} (JPA layer)
+ * and {@link StudentDashboardMetric} (domain layer).
+ * The {@code weeklyActivity} JSONB column is stored as a {@code Map<String, Integer>} where
+ * keys are {@link java.time.DayOfWeek} names.  Jackson is used for JSON serialisation;
+ * parse errors are silently ignored, leaving the map empty.
+ */
 @Component
 @RequiredArgsConstructor
 public class StudentMetricsMapper {
@@ -18,6 +25,14 @@ public class StudentMetricsMapper {
     private final ObjectMapper objectMapper;
     private static final TypeReference<Map<String, Integer>> MAP_TYPE = new TypeReference<>() {};
 
+    /**
+     * Converts a JPA entity into its corresponding domain model.
+     * The {@code weeklyActivity} JSON string is deserialised into a {@code Map<DayOfWeek, Integer>}.
+     * If parsing fails the weekly activity map will be empty.
+     *
+     * @param entity the persistence entity to convert
+     * @return the equivalent domain {@link StudentDashboardMetric}
+     */
     public StudentDashboardMetric toDomain(StudentDashboardMetricEntity entity) {
         Map<DayOfWeek, Integer> weekly = new HashMap<>();
         try {
@@ -37,6 +52,14 @@ public class StudentMetricsMapper {
                 .build();
     }
 
+    /**
+     * Converts a domain model into its corresponding JPA entity.
+     * The {@code weeklyActivity} map is serialised to a JSON string with {@link java.time.DayOfWeek}
+     * names as keys.  If serialisation fails the column defaults to {@code "{}"}.
+     *
+     * @param domain the domain metric to convert
+     * @return the equivalent {@link StudentDashboardMetricEntity} ready for persistence
+     */
     public StudentDashboardMetricEntity toEntity(StudentDashboardMetric domain) {
         String weeklyJson = "{}";
         try {

@@ -8,6 +8,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * JPA entity that maps to the {@code student_dashboard_metrics} table.
+ * Each row holds the pre-computed activity metrics for a single student for a given
+ * period, including the number of patches attended, the most frequent category,
+ * and the per-day-of-week activity breakdown stored as a JSONB column.
+ */
 @Entity
 @Table(name = "student_dashboard_metrics")
 @Getter
