@@ -8,6 +8,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * JPA entity that maps to the {@code report_requests} table.
+ * Each row tracks the lifecycle of a single CSV report request, from initial creation
+ * ({@code PENDING}) through processing ({@code PROCESSING}) to final outcome
+ * ({@code READY} or {@code FAILED}), along with the filters used and the resulting file URL.
+ */
 @Entity
 @Table(name = "report_requests")
 @Getter
