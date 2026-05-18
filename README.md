@@ -485,6 +485,7 @@ El pipeline `.github/workflows/ci.yml` corre en cada push a `main`, `develop` o 
 7. **Upload artifact** — sube reporte JaCoCo
 8. **Docker Build** — construye imagen `m12-statistics-analytics:{sha}`
 
+
 ---
 
 ## 15. Link Swagger
