@@ -8,6 +8,7 @@ import lombok.Getter;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -43,6 +44,19 @@ public class StudentDashboardMetric {
 
     /** Timestamp at which this metric record was last computed and stored. */
     private LocalDateTime computedAt;
+
+    /**
+     * All badges earned by the student, fetched live from GamificationService (PTR17).
+     * May be {@code null} or empty when the gamification service is unavailable.
+     */
+    private List<AchievementInfo> earnedBadges;
+
+    /**
+     * Fraction of monas collected toward the next gamification level (0.0–1.0).
+     * Computed from GamificationService level data (PTR17).
+     * Returns {@code 1.0} when the student is already at the maximum level.
+     */
+    private double progressToNextLevel;
 
     /**
      * Determines whether this metric record is outdated and should be recomputed.
