@@ -5,10 +5,15 @@ import edu.eci.patriciaM12.domain.model.StudentDashboardMetric;
 import edu.eci.patriciaM12.domain.model.enums.CampusZone;
 import edu.eci.patriciaM12.domain.ports.in.GetInteractionAnalyticsUseCase;
 import edu.eci.patriciaM12.domain.ports.out.StudentMetricsRepositoryPort;
+import edu.eci.patriciaM12.infrastructure.external.GeolocationFeignClient;
+import edu.eci.patriciaM12.infrastructure.external.dto.ZoneHeatmapResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -26,11 +31,13 @@ import java.util.UUID;
  * event data fed from M06 (Feed & Search) via Kafka topic {@code m12-analytics-group}.
  * Until that consumer is wired in, these fields default to {@code null} / empty.</p>
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class InteractionAnalyticsService implements GetInteractionAnalyticsUseCase {
 
     private final StudentMetricsRepositoryPort studentMetricsRepository;
+    private final GeolocationFeignClient geolocationFeignClient;
 
     /**
      * {@inheritDoc}
@@ -62,10 +69,41 @@ public class InteractionAnalyticsService implements GetInteractionAnalyticsUseCa
 
         return InteractionAnalyticsResponse.builder()
                 .totalInteractions(total)
-                .mostActiveZone(null)
+                .mostActiveZone(resolveMostActiveZone())
                 .peakActivityDay(peakDay)
                 .interactionSummary(summary)
                 .build();
+    }
+
+    /**
+     * Resolves the most active campus zone for the current week via the geolocation service.
+     * Returns {@code null} on any error (fail-open).
+     *
+     * @return the {@link CampusZone} with the highest active-user count this week, or {@code null}
+     */
+    private CampusZone resolveMostActiveZone() {
+        try {
+            LocalDate today = LocalDate.now();
+            LocalDate weekStart = today.with(DayOfWeek.MONDAY);
+            ZoneHeatmapResponse heatmap = geolocationFeignClient.getCampusHeatmap(
+                    weekStart.toString(), today.toString());
+            if (heatmap == null || heatmap.zones() == null || heatmap.zones().isEmpty()) {
+                return null;
+            }
+            return heatmap.zones().stream()
+                    .max(Comparator.comparingInt(ZoneHeatmapResponse.ZoneEntry::activeUsers))
+                    .map(entry -> {
+                        try {
+                            return CampusZone.valueOf(entry.campusZone().toUpperCase());
+                        } catch (IllegalArgumentException e) {
+                            return null;
+                        }
+                    })
+                    .orElse(null);
+        } catch (Exception e) {
+            log.debug("Geolocation unavailable — mostActiveZone will be null: {}", e.getMessage());
+            return null;
+        }
     }
 
     /**
