@@ -3,6 +3,7 @@ package edu.eci.patriciaM12.application.service;
 import edu.eci.patriciaM12.domain.model.StudentDashboardMetric;
 import edu.eci.patriciaM12.domain.ports.in.GetStudentDashboardUseCase;
 import edu.eci.patriciaM12.domain.ports.out.StudentMetricsRepositoryPort;
+import edu.eci.patriciaM12.infrastructure.external.HangoutFeignClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +27,7 @@ import java.util.UUID;
 public class DashboardService implements GetStudentDashboardUseCase {
 
     private final StudentMetricsRepositoryPort studentMetricsRepository;
+    private final HangoutFeignClient hangoutFeignClient;
 
     /**
      * Retrieves the dashboard metrics for the given student.
@@ -37,8 +39,26 @@ public class DashboardService implements GetStudentDashboardUseCase {
      */
     @Override
     public StudentDashboardMetric execute(UUID userId) {
-        return studentMetricsRepository.findByUserId(userId)
+        StudentDashboardMetric base = studentMetricsRepository.findByUserId(userId)
                 .orElseGet(() -> buildEmptyMetric(userId));
+        int liveParcheCount = fetchParcheCount(userId);
+        return StudentDashboardMetric.builder()
+                .userId(base.getUserId())
+                .period(base.getPeriod())
+                .patchesAttended(liveParcheCount)
+                .topCategory(base.getTopCategory())
+                .weeklyActivity(base.getWeeklyActivity())
+                .computedAt(base.getComputedAt())
+                .build();
+    }
+
+    private int fetchParcheCount(UUID userId) {
+        try {
+            Integer count = hangoutFeignClient.getUserParcheCount(userId);
+            return count != null ? count : 0;
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
 

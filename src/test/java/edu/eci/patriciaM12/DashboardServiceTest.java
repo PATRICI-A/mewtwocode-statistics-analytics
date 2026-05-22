@@ -5,6 +5,7 @@ import edu.eci.patriciaM12.domain.model.StudentDashboardMetric;
 import edu.eci.patriciaM12.domain.model.enums.ParticipationLevel;
 import edu.eci.patriciaM12.domain.model.enums.PatchCategory;
 import edu.eci.patriciaM12.domain.ports.out.StudentMetricsRepositoryPort;
+import edu.eci.patriciaM12.infrastructure.external.HangoutFeignClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,6 +27,7 @@ import static org.mockito.Mockito.when;
 class DashboardServiceTest {
 
     @Mock private StudentMetricsRepositoryPort studentMetricsRepository;
+    @Mock private HangoutFeignClient hangoutFeignClient;
 
     private DashboardService service;
 
@@ -33,13 +35,14 @@ class DashboardServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new DashboardService(studentMetricsRepository);
+        service = new DashboardService(studentMetricsRepository, hangoutFeignClient);
     }
 
     @Test
     void retornaMetricaExistenteCuandoRepositorioLaEncuentra() {
         StudentDashboardMetric metric = buildMetric(userId, 6, PatchCategory.GAMING);
         when(studentMetricsRepository.findByUserId(userId)).thenReturn(Optional.of(metric));
+        when(hangoutFeignClient.getUserParcheCount(userId)).thenReturn(6);
 
         StudentDashboardMetric result = service.execute(userId);
 
@@ -86,6 +89,7 @@ class DashboardServiceTest {
     void retornaNivelActivoCuandoTieneTresParches() {
         StudentDashboardMetric metric = buildMetric(userId, 3, PatchCategory.SPORTS);
         when(studentMetricsRepository.findByUserId(userId)).thenReturn(Optional.of(metric));
+        when(hangoutFeignClient.getUserParcheCount(userId)).thenReturn(3);
 
         assertThat(service.execute(userId).getParticipationLevel())
                 .isEqualTo(ParticipationLevel.ACTIVO);
@@ -95,6 +99,7 @@ class DashboardServiceTest {
     void retornaNivelConectorCuandoTieneDiezParches() {
         StudentDashboardMetric metric = buildMetric(userId, 10, PatchCategory.STUDY);
         when(studentMetricsRepository.findByUserId(userId)).thenReturn(Optional.of(metric));
+        when(hangoutFeignClient.getUserParcheCount(userId)).thenReturn(10);
 
         assertThat(service.execute(userId).getParticipationLevel())
                 .isEqualTo(ParticipationLevel.CONECTOR);
@@ -104,6 +109,7 @@ class DashboardServiceTest {
     void retornaNivelEmbajadorCuandoTieneVeinteParches() {
         StudentDashboardMetric metric = buildMetric(userId, 20, PatchCategory.CULTURE);
         when(studentMetricsRepository.findByUserId(userId)).thenReturn(Optional.of(metric));
+        when(hangoutFeignClient.getUserParcheCount(userId)).thenReturn(20);
 
         assertThat(service.execute(userId).getParticipationLevel())
                 .isEqualTo(ParticipationLevel.EMBAJADOR);

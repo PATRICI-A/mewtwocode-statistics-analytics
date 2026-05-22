@@ -5,6 +5,9 @@ import edu.eci.patriciaM12.application.service.SocialIndicatorsService;
 import edu.eci.patriciaM12.domain.model.StudentDashboardMetric;
 import edu.eci.patriciaM12.domain.model.enums.ActivityLevel;
 import edu.eci.patriciaM12.domain.ports.out.StudentMetricsRepositoryPort;
+import edu.eci.patriciaM12.infrastructure.external.CampusEventsFeignClient;
+import edu.eci.patriciaM12.infrastructure.external.HangoutFeignClient;
+import edu.eci.patriciaM12.infrastructure.external.ProfileFeignClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,13 +31,16 @@ import static org.mockito.Mockito.when;
 class SocialIndicatorsServiceTest {
 
     @Mock private StudentMetricsRepositoryPort studentMetricsRepository;
+    @Mock private HangoutFeignClient hangoutFeignClient;
+    @Mock private CampusEventsFeignClient campusEventsFeignClient;
+    @Mock private ProfileFeignClient profileFeignClient;
 
     private SocialIndicatorsService service;
     private final UUID userId = UUID.randomUUID();
 
     @BeforeEach
     void setUp() {
-        service = new SocialIndicatorsService(studentMetricsRepository);
+        service = new SocialIndicatorsService(studentMetricsRepository, hangoutFeignClient, campusEventsFeignClient, profileFeignClient);
     }
 
     @Test
@@ -73,42 +79,36 @@ class SocialIndicatorsServiceTest {
 
     @Test
     void clasificaLowCuandoTotalEsCeroOUno() {
-        StudentDashboardMetric metric = buildMetric(1, emptyWeekly());
-        when(studentMetricsRepository.findByUserIdAndWeek(any(), any(), any())).thenReturn(Optional.of(metric));
+        when(studentMetricsRepository.findByUserIdAndWeek(any(), any(), any())).thenReturn(Optional.empty());
         when(studentMetricsRepository.findByUserIdAndPreviousWeek(any(), any(), any())).thenReturn(Optional.empty());
+        when(hangoutFeignClient.getUserParcheCount(userId)).thenReturn(1);
 
         assertThat(service.execute(userId, 0).getActivityLevel()).isEqualTo(ActivityLevel.LOW);
     }
 
     @Test
     void clasificaMediumCuandoTotalEsDosACuatro() {
-        Map<DayOfWeek, Integer> weekly = emptyWeekly();
-        weekly.put(DayOfWeek.MONDAY, 1);
-        StudentDashboardMetric metric = buildMetric(1, weekly);
-        when(studentMetricsRepository.findByUserIdAndWeek(any(), any(), any())).thenReturn(Optional.of(metric));
+        when(studentMetricsRepository.findByUserIdAndWeek(any(), any(), any())).thenReturn(Optional.empty());
         when(studentMetricsRepository.findByUserIdAndPreviousWeek(any(), any(), any())).thenReturn(Optional.empty());
+        when(hangoutFeignClient.getUserParcheCount(userId)).thenReturn(2);
 
         assertThat(service.execute(userId, 0).getActivityLevel()).isEqualTo(ActivityLevel.MEDIUM);
     }
 
     @Test
     void clasificaHighCuandoTotalEsCincoANueve() {
-        Map<DayOfWeek, Integer> weekly = emptyWeekly();
-        weekly.put(DayOfWeek.MONDAY, 4);
-        StudentDashboardMetric metric = buildMetric(1, weekly);
-        when(studentMetricsRepository.findByUserIdAndWeek(any(), any(), any())).thenReturn(Optional.of(metric));
+        when(studentMetricsRepository.findByUserIdAndWeek(any(), any(), any())).thenReturn(Optional.empty());
         when(studentMetricsRepository.findByUserIdAndPreviousWeek(any(), any(), any())).thenReturn(Optional.empty());
+        when(hangoutFeignClient.getUserParcheCount(userId)).thenReturn(5);
 
         assertThat(service.execute(userId, 0).getActivityLevel()).isEqualTo(ActivityLevel.HIGH);
     }
 
     @Test
     void clasificaVeryHighCuandoTotalEsDiezOMas() {
-        Map<DayOfWeek, Integer> weekly = emptyWeekly();
-        weekly.put(DayOfWeek.MONDAY, 5);
-        StudentDashboardMetric metric = buildMetric(5, weekly);
-        when(studentMetricsRepository.findByUserIdAndWeek(any(), any(), any())).thenReturn(Optional.of(metric));
+        when(studentMetricsRepository.findByUserIdAndWeek(any(), any(), any())).thenReturn(Optional.empty());
         when(studentMetricsRepository.findByUserIdAndPreviousWeek(any(), any(), any())).thenReturn(Optional.empty());
+        when(hangoutFeignClient.getUserParcheCount(userId)).thenReturn(10);
 
         assertThat(service.execute(userId, 0).getActivityLevel()).isEqualTo(ActivityLevel.VERY_HIGH);
     }
