@@ -5,6 +5,7 @@ import edu.eci.patriciaM12.domain.model.StudentDashboardMetric;
 import edu.eci.patriciaM12.domain.model.enums.ParticipationLevel;
 import edu.eci.patriciaM12.domain.model.enums.PatchCategory;
 import edu.eci.patriciaM12.domain.ports.out.StudentMetricsRepositoryPort;
+import edu.eci.patriciaM12.infrastructure.external.GamificationFeignClient;
 import edu.eci.patriciaM12.infrastructure.external.HangoutFeignClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +29,7 @@ class DashboardServiceTest {
 
     @Mock private StudentMetricsRepositoryPort studentMetricsRepository;
     @Mock private HangoutFeignClient hangoutFeignClient;
+    @Mock private GamificationFeignClient gamificationFeignClient;
 
     private DashboardService service;
 
@@ -35,7 +37,7 @@ class DashboardServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new DashboardService(studentMetricsRepository, hangoutFeignClient);
+        service = new DashboardService(studentMetricsRepository, hangoutFeignClient, gamificationFeignClient);
     }
 
     @Test
