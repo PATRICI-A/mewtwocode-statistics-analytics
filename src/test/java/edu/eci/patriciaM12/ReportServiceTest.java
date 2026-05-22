@@ -7,6 +7,7 @@ import edu.eci.patriciaM12.domain.model.ReportFilters;
 import edu.eci.patriciaM12.domain.model.ReportRequest;
 import edu.eci.patriciaM12.domain.model.enums.ReportStatus;
 import edu.eci.patriciaM12.domain.ports.out.CsvGeneratorPort;
+import edu.eci.patriciaM12.domain.ports.out.NotificationPublisherPort;
 import edu.eci.patriciaM12.domain.ports.out.ReportRequestRepositoryPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,9 @@ public class ReportServiceTest {
     @Mock
     private CsvGeneratorPort csvGenerator;
 
+    @Mock
+    private NotificationPublisherPort notificationPublisher;
+
     private ReportService reportService;
 
     private final UUID userId = UUID.randomUUID();
@@ -40,7 +44,7 @@ public class ReportServiceTest {
 
     @BeforeEach
     void setUp() {
-        reportService = new ReportService(reportRequestRepository, csvGenerator);
+        reportService = new ReportService(reportRequestRepository, csvGenerator, notificationPublisher);
         validFilters = ReportFilters.builder()
                 .dateFrom(LocalDate.now().minusDays(7))
                 .dateTo(LocalDate.now())

@@ -1,5 +1,6 @@
 package edu.eci.patriciaM12.application.service;
 
+import edu.eci.patriciaM12.application.dto.event.ReportReadyEventDto;
 import edu.eci.patriciaM12.application.dto.response.ReportHistoryDTO;
 import edu.eci.patriciaM12.domain.exceptions.InvalidReportFiltersException;
 import edu.eci.patriciaM12.domain.exceptions.ReportNotFoundException;
@@ -8,6 +9,7 @@ import edu.eci.patriciaM12.domain.model.ReportRequest;
 import edu.eci.patriciaM12.domain.model.enums.ReportStatus;
 import edu.eci.patriciaM12.domain.ports.in.RequestReportUseCase;
 import edu.eci.patriciaM12.domain.ports.out.CsvGeneratorPort;
+import edu.eci.patriciaM12.domain.ports.out.NotificationPublisherPort;
 import edu.eci.patriciaM12.domain.ports.out.ReportRequestRepositoryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
@@ -45,6 +47,7 @@ public class ReportService implements RequestReportUseCase {
 
     private final ReportRequestRepositoryPort reportRequestRepository;
     private final CsvGeneratorPort csvGenerator;
+    private final NotificationPublisherPort notificationPublisher;
 
     /**
      * Creates and persists a new report request, then triggers CSV generation.
@@ -157,6 +160,15 @@ public class ReportService implements RequestReportUseCase {
         try {
             String fileUrl = csvGenerator.generate(report.getFilters());
             reportRequestRepository.save(buildWith(report, ReportStatus.READY, fileUrl));
+            // Notify user that their report is ready for download (REPORT_READY)
+            notificationPublisher.publishReportReady(
+                    ReportReadyEventDto.builder()
+                            .requestedBy(report.getRequestedBy())
+                            .reportId(report.getId())
+                            .downloadUrl(fileUrl)
+                            .timestamp(LocalDateTime.now())
+                            .build()
+            );
         } catch (Exception ex) {
             reportRequestRepository.save(buildWith(report, ReportStatus.FAILED, null));
         }

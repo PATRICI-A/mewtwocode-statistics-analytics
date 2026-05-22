@@ -6,6 +6,7 @@ import edu.eci.patriciaM12.domain.exceptions.InvalidReportFiltersException;
 import edu.eci.patriciaM12.domain.model.AdminAnalyticsSnapshot;
 import edu.eci.patriciaM12.domain.model.enums.MetricType;
 import edu.eci.patriciaM12.domain.ports.out.AdminSnapshotRepositoryPort;
+import edu.eci.patriciaM12.infrastructure.external.GeolocationFeignClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,12 +28,14 @@ class AdminAnalyticsServiceTest {
 
     @Mock
     private AdminSnapshotRepositoryPort adminSnapshotRepository;
+    @Mock
+    private GeolocationFeignClient geolocationFeignClient;
 
     private AdminAnalyticsService service;
 
     @BeforeEach
     void setUp() {
-        service = new AdminAnalyticsService(adminSnapshotRepository);
+        service = new AdminAnalyticsService(adminSnapshotRepository, geolocationFeignClient);
     }
 
     @Test

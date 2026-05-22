@@ -4,6 +4,7 @@ import edu.eci.patriciaM12.application.dto.response.InteractionAnalyticsResponse
 import edu.eci.patriciaM12.application.service.InteractionAnalyticsService;
 import edu.eci.patriciaM12.domain.model.StudentDashboardMetric;
 import edu.eci.patriciaM12.domain.ports.out.StudentMetricsRepositoryPort;
+import edu.eci.patriciaM12.infrastructure.external.GeolocationFeignClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,13 +26,14 @@ import static org.mockito.Mockito.when;
 class InteractionAnalyticsServiceTest {
 
     @Mock private StudentMetricsRepositoryPort studentMetricsRepository;
+    @Mock private GeolocationFeignClient       geolocationFeignClient;
 
     private InteractionAnalyticsService service;
     private final UUID userId = UUID.randomUUID();
 
     @BeforeEach
     void setUp() {
-        service = new InteractionAnalyticsService(studentMetricsRepository);
+        service = new InteractionAnalyticsService(studentMetricsRepository, geolocationFeignClient);
     }
 
     @Test

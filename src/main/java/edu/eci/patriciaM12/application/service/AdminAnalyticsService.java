@@ -4,17 +4,23 @@ import edu.eci.patriciaM12.application.dto.response.AdminAnalyticsResponse;
 import edu.eci.patriciaM12.application.dto.response.AlertDTO;
 import edu.eci.patriciaM12.application.dto.response.AnalyticsDTO;
 import edu.eci.patriciaM12.application.dto.response.EventAnalyticsDTO;
+import edu.eci.patriciaM12.application.dto.response.HeatmapDTO;
 import edu.eci.patriciaM12.domain.exceptions.InvalidReportFiltersException;
 import edu.eci.patriciaM12.domain.model.AdminAnalyticsSnapshot;
+import edu.eci.patriciaM12.domain.model.enums.CampusZone;
 import edu.eci.patriciaM12.domain.model.enums.MetricType;
 import edu.eci.patriciaM12.domain.ports.in.GetAdminAnalyticsUseCase;
 import edu.eci.patriciaM12.domain.ports.out.AdminSnapshotRepositoryPort;
+import edu.eci.patriciaM12.infrastructure.external.GeolocationFeignClient;
+import edu.eci.patriciaM12.infrastructure.external.dto.ZoneHeatmapResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +44,7 @@ import java.util.Map;
  * {@code matchSuccessRate} requires data from M05 (Notifications/Matches); defaults to 0.0
  * until that integration is live.</p>
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AdminAnalyticsService implements GetAdminAnalyticsUseCase {
@@ -45,6 +52,7 @@ public class AdminAnalyticsService implements GetAdminAnalyticsUseCase {
     private static final double ALERT_DROP_THRESHOLD = 0.30;
 
     private final AdminSnapshotRepositoryPort adminSnapshotRepository;
+    private final GeolocationFeignClient geolocationFeignClient;
 
     /**
      * {@inheritDoc}
@@ -103,7 +111,7 @@ public class AdminAnalyticsService implements GetAdminAnalyticsUseCase {
                 .parcheStats(include(metricType, MetricType.PARCHES) ? buildParcheStats(snapshots) : null)
                 .topEvents(include(metricType, MetricType.EVENTS) ? List.<EventAnalyticsDTO>of() : null)
                 .matchSuccessRate(include(metricType, MetricType.MATCHES) ? 0.0 : null)
-                .campusHeatmap(null)
+                .campusHeatmap(include(metricType, MetricType.ZONES) ? buildCampusHeatmap(resolvedStart, resolvedEnd) : null)
                 .retentionRate(include(metricType, MetricType.USERS) ? computeRetentionRate(snapshots, previousWeekSnapshots) : null)
                 .abandonedParches(include(metricType, MetricType.PARCHES) ? 0 : null)
                 .avgTimeToFirstMember(include(metricType, MetricType.PARCHES) ? 0L : null)
@@ -224,6 +232,74 @@ public class AdminAnalyticsService implements GetAdminAnalyticsUseCase {
         }
         if (!resolvedEndDate.isAfter(resolvedStartDate)) {
             throw new InvalidReportFiltersException("endDate must be after startDate.");
+        }
+    }
+
+    /**
+     * Builds the campus activity heatmap by querying the geolocation service.
+     * Returns {@code null} on any error (fail-open).
+     *
+     * @param startDate start of the query window
+     * @param endDate   end of the query window
+     * @return a populated {@link HeatmapDTO}, or {@code null} if data is unavailable
+     */
+    private HeatmapDTO buildCampusHeatmap(LocalDate startDate, LocalDate endDate) {
+        try {
+            ZoneHeatmapResponse heatmap = geolocationFeignClient.getCampusHeatmap(
+                    startDate.toString(), endDate.toString());
+            if (heatmap == null || heatmap.zones() == null || heatmap.zones().isEmpty()) {
+                return null;
+            }
+
+            Map<CampusZone, Map<Integer, Integer>> zonesMap = new LinkedHashMap<>();
+            for (ZoneHeatmapResponse.ZoneEntry entry : heatmap.zones()) {
+                try {
+                    CampusZone zone = CampusZone.valueOf(entry.campusZone().toUpperCase());
+                    int hour = parsePeakHour(entry.peakHour());
+                    zonesMap.put(zone, Map.of(hour, entry.activeUsers()));
+                } catch (IllegalArgumentException ignored) {
+                    log.debug("Unknown campus zone '{}' in heatmap response — skipping", entry.campusZone());
+                }
+            }
+
+            if (zonesMap.isEmpty()) return null;
+
+            CampusZone peakZone = heatmap.zones().stream()
+                    .max(Comparator.comparingInt(ZoneHeatmapResponse.ZoneEntry::activeUsers))
+                    .map(e -> {
+                        try { return CampusZone.valueOf(e.campusZone().toUpperCase()); }
+                        catch (IllegalArgumentException ex) { return null; }
+                    })
+                    .orElse(null);
+
+            Integer peakHour = heatmap.zones().stream()
+                    .max(Comparator.comparingInt(ZoneHeatmapResponse.ZoneEntry::activeUsers))
+                    .map(e -> parsePeakHour(e.peakHour()))
+                    .orElse(null);
+
+            return HeatmapDTO.builder()
+                    .zones(zonesMap)
+                    .peakZone(peakZone)
+                    .peakHour(peakHour)
+                    .build();
+
+        } catch (Exception e) {
+            log.warn("Geolocation service unavailable — campusHeatmap will be null: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Parses a peak-hour string (e.g. "14") to an integer hour. Returns 0 on parse failure.
+     *
+     * @param peakHour the string representation of the hour
+     * @return parsed integer hour, or 0 if unparseable
+     */
+    private int parsePeakHour(String peakHour) {
+        try {
+            return Integer.parseInt(peakHour);
+        } catch (NumberFormatException e) {
+            return 0;
         }
     }
 
