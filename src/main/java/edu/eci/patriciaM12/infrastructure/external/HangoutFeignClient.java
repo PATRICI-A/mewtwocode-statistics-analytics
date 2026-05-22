@@ -7,11 +7,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import java.util.UUID;
 
 @FeignClient(
-        name = "campus-events-service",
-        url = "${services.campus-events.url}"
+        name = "hangout-service",
+        url = "${services.hangout.url}"
 )
-public interface CampusEventsFeignClient {
+public interface HangoutFeignClient {
 
-    @GetMapping("/api/v1/events/internal/rsvp-count/{userId}")
-    Integer getUserRsvpCount(@PathVariable UUID userId);
+    @GetMapping("/api/v1/parches/internal/user/{userId}/parche-count")
+    Integer getUserParcheCount(@PathVariable UUID userId);
 }
