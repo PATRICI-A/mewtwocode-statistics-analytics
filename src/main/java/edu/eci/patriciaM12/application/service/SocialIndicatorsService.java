@@ -8,6 +8,9 @@ import edu.eci.patriciaM12.domain.model.StudentDashboardMetric;
 import edu.eci.patriciaM12.domain.model.enums.ActivityLevel;
 import edu.eci.patriciaM12.domain.ports.in.GetSocialIndicatorsUseCase;
 import edu.eci.patriciaM12.domain.ports.out.StudentMetricsRepositoryPort;
+import edu.eci.patriciaM12.infrastructure.external.CampusEventsFeignClient;
+import edu.eci.patriciaM12.infrastructure.external.HangoutFeignClient;
+import edu.eci.patriciaM12.infrastructure.external.ProfileFeignClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +41,9 @@ public class SocialIndicatorsService implements GetSocialIndicatorsUseCase {
     private static final double CONNECTIONS_WEIGHT = 0.25;
 
     private final StudentMetricsRepositoryPort studentMetricsRepository;
+    private final HangoutFeignClient hangoutFeignClient;
+    private final CampusEventsFeignClient campusEventsFeignClient;
+    private final ProfileFeignClient profileFeignClient;
 
     /**
      * {@inheritDoc}
@@ -70,8 +76,8 @@ public class SocialIndicatorsService implements GetSocialIndicatorsUseCase {
                 .findByUserIdAndPreviousWeek(userId, prevMonday, prevSunday)
                 .orElse(null);
 
-        WeeklyParticipationDTO participation = buildParticipation(current);
-        NetworkGrowthDTO networkGrowth = buildNetworkGrowth(current, previous);
+        WeeklyParticipationDTO participation = buildParticipation(current, userId);
+        NetworkGrowthDTO networkGrowth = buildNetworkGrowth(current, previous, userId);
         SocialAffinityDTO affinity = buildAffinity(current);
         ActivityLevel level = classifyActivityLevel(participation);
 
@@ -90,17 +96,14 @@ public class SocialIndicatorsService implements GetSocialIndicatorsUseCase {
      * @param metric the current-week metric record; may be {@code null}
      * @return the populated {@link WeeklyParticipationDTO}
      */
-    private WeeklyParticipationDTO buildParticipation(StudentDashboardMetric metric) {
-        if (metric == null) {
-            return WeeklyParticipationDTO.builder()
-                    .parcheCount(0).eventRsvpCount(0).activeConnections(0).build();
-        }
-        int weeklyTotal = metric.getWeeklyActivity() == null ? 0
-                : metric.getWeeklyActivity().values().stream().mapToInt(Integer::intValue).sum();
+    private WeeklyParticipationDTO buildParticipation(StudentDashboardMetric metric, UUID userId) {
+        int parcheCount = fetchSafe(() -> hangoutFeignClient.getUserParcheCount(userId));
+        int eventRsvpCount = fetchSafe(() -> campusEventsFeignClient.getUserRsvpCount(userId));
+        int activeConnections = fetchSafe(() -> profileFeignClient.getUserConnectionsCount(userId));
         return WeeklyParticipationDTO.builder()
-                .parcheCount(metric.getPatchesAttended())
-                .eventRsvpCount(weeklyTotal)
-                .activeConnections(0)
+                .parcheCount(parcheCount)
+                .eventRsvpCount(eventRsvpCount)
+                .activeConnections(activeConnections)
                 .build();
     }
 
@@ -112,8 +115,8 @@ public class SocialIndicatorsService implements GetSocialIndicatorsUseCase {
      * @param previous previous-week metric; may be {@code null}
      * @return the populated {@link NetworkGrowthDTO}
      */
-    private NetworkGrowthDTO buildNetworkGrowth(StudentDashboardMetric current, StudentDashboardMetric previous) {
-        int currentConnections = 0;
+    private NetworkGrowthDTO buildNetworkGrowth(StudentDashboardMetric current, StudentDashboardMetric previous, UUID userId) {
+        int currentConnections = fetchSafe(() -> profileFeignClient.getUserConnectionsCount(userId));
         int previousConnections = 0;
         Double growthRate = null;
 
@@ -153,18 +156,15 @@ public class SocialIndicatorsService implements GetSocialIndicatorsUseCase {
                 .build();
     }
 
-    /**
-     * Classifies the student's activity level based on total activities this week.
-     * <ul>
-     *   <li>0–1 → LOW</li>
-     *   <li>2–4 → MEDIUM</li>
-     *   <li>5–9 → HIGH</li>
-     *   <li>10+ → VERY_HIGH</li>
-     * </ul>
-     *
-     * @param participation the weekly participation data
-     * @return the qualitative {@link ActivityLevel}
-     */
+    private int fetchSafe(java.util.function.Supplier<Integer> call) {
+        try {
+            Integer result = call.get();
+            return result != null ? result : 0;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
     private ActivityLevel classifyActivityLevel(WeeklyParticipationDTO participation) {
         int total = participation.getParcheCount() + participation.getEventRsvpCount();
         if (total >= 10) return ActivityLevel.VERY_HIGH;
