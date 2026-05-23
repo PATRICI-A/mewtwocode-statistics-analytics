@@ -4,6 +4,7 @@ import edu.eci.patriciaM12.domain.model.AchievementInfo;
 import edu.eci.patriciaM12.domain.model.StudentDashboardMetric;
 import edu.eci.patriciaM12.domain.model.enums.ParticipationLevel;
 import edu.eci.patriciaM12.domain.model.enums.PatchCategory;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Value;
 
@@ -24,13 +25,52 @@ import java.util.UUID;
  */
 @Value
 @Builder
+@Schema(
+        name = "StudentDashboardResponse",
+        description = """
+                Personal activity metrics for a student's dashboard. Implements the Empty Object \
+                Pattern — always returns HTTP 200 with zeroed-out values when no activity has \
+                been recorded yet, never HTTP 404."""
+)
 public class StudentDashboardResponse {
 
+    @Schema(
+            description = "UUID of the authenticated student",
+            example = "550e8400-e29b-41d4-a716-446655440000"
+    )
     UUID userId;
+
+    @Schema(
+            description = "Total number of parches the student has attended or joined",
+            example = "42"
+    )
     int patchesAttended;
+
+    @Schema(
+            description = "The parche category in which the student has the highest engagement",
+            example = "SPORTS"
+    )
     PatchCategory topCategory;
+
+    @Schema(
+            description = """
+                    Map of day-of-week to activity count, showing the student's activity distribution \
+                    across the week. Keys are days (e.g., `MONDAY`, `TUESDAY`), values are interaction counts.""",
+            example = "{\"MONDAY\": 12, \"WEDNESDAY\": 8, \"FRIDAY\": 15}"
+    )
     Map<DayOfWeek, Integer> weeklyActivity;
+
+    @Schema(
+            description = """
+                    Qualitative classification of the student's overall participation level.
+                    Possible values: `LOW`, `MEDIUM`, `HIGH`, `VERY_HIGH`."""
+    )
     ParticipationLevel participationLevel;
+
+    @Schema(
+            description = "ISO-8601 timestamp of when this dashboard data was computed",
+            example = "2025-06-15T14:30:00.000Z"
+    )
     LocalDateTime computedAt;
 
     /** Total number of badges/monas earned by the student (PTR17). */

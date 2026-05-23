@@ -1,5 +1,6 @@
 package edu.eci.patriciaM12.application.dto.request;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,13 +18,28 @@ import java.time.LocalDate;
  */
 @Data
 @NoArgsConstructor
+@Schema(
+        name = "DateRange",
+        description = """
+                Alternative date-range wrapper for report filters. Takes precedence over the \
+                top-level `dateFrom`/`dateTo` fields when both are provided. Enables callers \
+                to express the date boundary as a nested object instead of flat parameters."""
+)
 public class DateRangeDTO {
 
-    /** Inclusive start of the reporting period. Must not be {@code null}. */
     @NotNull
+    @Schema(
+            description = "Inclusive start date of the reporting period in ISO-8601 format (yyyy-MM-dd)",
+            example = "2025-02-01",
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
     private LocalDate startDate;
 
-    /** Inclusive end of the reporting period. Must not be {@code null}. */
     @NotNull
+    @Schema(
+            description = "Inclusive end date of the reporting period in ISO-8601 format (yyyy-MM-dd). Must not be before startDate.",
+            example = "2025-06-30",
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
     private LocalDate endDate;
 }
