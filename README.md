@@ -218,7 +218,7 @@ Enumeraciones: `ParticipationLevel` (NUEVO <3, ACTIVO 3-9, CONECTOR 10-19, EMBAJ
 ## 7. Diagrama de Componentes
 
 <div align="center">
-<img src="docs/ComponentesGeneral_PATRICIA.jpg" alt="Diagrama de Componentes" width="700"/>
+<img src="docs/ComponentesEstadisticas.png" alt="Diagrama de Componentes" width="700"/>
 </div>
 
 | Componente | Tipo | Interfaz |
@@ -247,7 +247,10 @@ Enumeraciones: `ParticipationLevel` (NUEVO <3, ACTIVO 3-9, CONECTOR 10-19, EMBAJ
 | F02 | RF18 | **Panel de Analítica Administrativa** | Métricas agregadas para administradores. Filtrables por rango de fechas y `MetricType`. Valida semestre activo. |
 | F03 | RF19 | **Solicitar Reporte CSV** | Crea `ReportRequest` con estado `PENDING`. CSV generado en `@Async`. Retorna 202 inmediatamente. |
 | F04 | RF19 | **Estado/Descarga de Reporte** | Consulta estado del reporte. Solo el solicitante puede consultarlo. PENDING→202, READY→200, FAILED→500. |
-| F05 | Interno | **Consumo de Eventos Kafka** | Procesa `MetricEvent` de M02, M03, M06 para actualizar métricas en tiempo real. |
+| F05 | RF38 | **Indicadores Sociales del Estudiante** | Participación semanal, crecimiento de red, afinidad social y nivel de actividad. Siempre retorna 200 (Empty Object Pattern). |
+| F06 | RF39 | **Analíticas de Interacción** | Total de interacciones, zona de campus más activa, día pico y desglose por tipo. Siempre retorna 200. |
+| F07 | RF40 | **Estadísticas Institucionales** | Estadísticas de eventos, participación estudiantil e índice de actividad social para usuarios `BIENESTAR`. Filtrable por `InstitutionalMetricType`. |
+| F08 | Interno | **Consumo de Eventos Kafka** | Procesa `MetricEvent` de M02, M03, M06 para actualizar métricas en tiempo real. |
 
 </div>
 
@@ -263,10 +266,17 @@ Enumeraciones: `ParticipationLevel` (NUEVO <3, ACTIVO 3-9, CONECTOR 10-19, EMBAJ
 | `GET` | `/api/v1/analytics/admin` | F02 — Panel administrativo | ROLE_ADMINISTRADOR (dev: libre) | 200 OK |
 | `POST` | `/api/analytics/reports` | F03 — Solicitar reporte | JWT autenticado | 202 Accepted |
 | `GET` | `/api/analytics/reports/{id}/download` | F04 — Estado/descarga | JWT (solo dueño) | 200 / 202 / 500 |
-
+| `GET` | `/api/analytics/reports/history` | F04 — Historial de reportes | JWT autenticado | 200 OK |
+| `GET` | `/api/v1/analytics/social-indicators` | F05 — Indicadores sociales | JWT autenticado | 200 OK |
+| `GET` | `/api/v1/analytics/interaction-analytics` | F06 — Analíticas de interacción | JWT autenticado | 200 OK |
+| `GET` | `/api/v1/analytics/institutional` | F07 — Estadísticas institucionales | ROLE_BIENESTAR | 200 OK |
 ---
 
 ### GET /api/v1/analytics/dashboard — Dashboard del Estudiante
+
+<div align="center">
+<img src="docs/Secuencia1.jpg" alt="Dashboard" width="600"/>
+</div>
 
 **Request:**
 ```
@@ -306,6 +316,9 @@ Authorization: Bearer <JWT>
 ---
 
 ### GET /api/v1/analytics/admin — Panel Administrativo
+<div align="center">
+<img src="docs/Secuencia2.jpg" alt="Panel de admin" width="600"/>
+</div>
 
 **Request:**
 ```
@@ -331,6 +344,9 @@ Authorization: Bearer <JWT con ROLE_ADMINISTRADOR>
 
 ### POST /api/analytics/reports — Solicitar Reporte CSV
 
+<div align="center">
+<img src="docs/Secuencia3.jpg" alt="Reporte CSV" width="600"/>
+</div>
 **Request:**
 ```json
 {
@@ -353,6 +369,10 @@ Authorization: Bearer <JWT con ROLE_ADMINISTRADOR>
 
 ### GET /api/analytics/reports/{id}/download — Estado/Descarga
 
+<div align="center">
+<img src="docs/Secuencia4.png" alt="Descarga de reporte" width="600"/>
+</div>
+
 | Status del reporte | HTTP | Body |
 |---|:---:|---|
 | `PENDING` | 202 | `{"status": "PENDING", "message": "Report is still being processed"}` |
@@ -360,6 +380,160 @@ Authorization: Bearer <JWT con ROLE_ADMINISTRADOR>
 | `FAILED` | 500 | `{"status": "FAILED", "message": "Report generation failed"}` |
 | No existe / no es del usuario | 404 | `{"error": "REPORT_NOT_FOUND", "status": 404}` |
 
+### GET /api/analytics/reports/history — Historial de Reportes
+<div align="center">
+<img src="docs/Secuencia4.png" alt="Descarga de reporte" width="600"/>
+</div>
+
+**Request:**
+
+**Response 200 OK:**
+```json
+[
+  {
+    "id": "7b1e4c2a-0f9d-4e3b-a1c8-2d0f6e9b5a3c",
+    "status": "READY",
+    "fileUrl": "/tmp/reports/report_20260513.csv",
+    "createdAt": "2026-05-13T10:00:00",
+    "expiresAt": "2026-06-12T10:00:00"
+  }
+]
+```
+
+Solo retorna reportes `READY` de los últimos 30 días pertenecientes al usuario autenticado. Puede ser una lista vacía.
+
+**Errores:**
+
+| HTTP | Escenario | Mensaje |
+|:---:|---|---|
+| 401 | JWT inválido o ausente | `"JWT inválido o ausente"` |
+
+---
+
+### GET /api/v1/analytics/social-indicators — Indicadores Sociales del Estudiante
+<div align="center">
+<img src="docs/Secuencia4.png" alt="Descarga de reporte" width="600"/>
+</div>
+
+**Request:**
+
+| Parámetro | Tipo | Obligatorio | Descripción |
+|---|---|---|---|
+| `weekRange` | `Integer` | No | Semana a consultar. `0` = semana actual, `1` = semana anterior, etc. Default: `0`. |
+
+**Response 200 OK:**
+```json
+{
+  "userId": "550e8400-e29b-41d4-a716-446655440001",
+  "weeklyParticipation": {
+    "MONDAY": 2, "TUESDAY": 0, "WEDNESDAY": 3,
+    "THURSDAY": 1, "FRIDAY": 2, "SATURDAY": 0, "SUNDAY": 0
+  },
+  "networkGrowth": 5,
+  "socialAffinity": 0.74,
+  "activityLevel": "ACTIVO"
+}
+```
+
+| Nivel | Condición |
+|---|---|
+| BAJO | `socialAffinity` < 0.3 |
+| MEDIO | 0.3 ≤ `socialAffinity` < 0.6 |
+| ACTIVO | 0.6 ≤ `socialAffinity` < 0.85 |
+| ALTO | `socialAffinity` ≥ 0.85 |
+
+Si no hay datos retorna todos los campos en cero (Empty Object Pattern, nunca 404).
+
+**Errores:**
+
+| HTTP | Escenario | Mensaje |
+|:---:|---|---|
+| 401 | JWT inválido o ausente | `"JWT inválido o ausente"` |
+
+---
+
+### GET /api/v1/analytics/interaction-analytics — Analíticas de Interacción
+<div align="center">
+<img src="docs/Secuencia5 (1).png" alt="Descarga de reporte" width="600"/>
+</div>
+
+**Request:**
+
+**Response 200 OK:**
+```json
+{
+  "userId": "550e8400-e29b-41d4-a716-446655440001",
+  "totalInteractions": 47,
+  "mostActiveCampusZone": "BIBLIOTECA",
+  "peakActivityDay": "WEDNESDAY",
+  "interactionBreakdown": {
+    "JOIN": 12,
+    "LEAVE": 3,
+    "VIEW": 28,
+    "CREATE": 4
+  }
+}
+```
+
+Si no hay datos retorna todos los campos en cero / null (Empty Object Pattern, nunca 404).
+
+**Errores:**
+
+| HTTP | Escenario | Mensaje |
+|:---:|---|---|
+| 401 | JWT inválido o ausente | `"JWT inválido o ausente"` |
+
+---
+
+### GET /api/v1/analytics/institutional — Estadísticas Institucionales
+<div align="center">
+<img src="docs/Secuencia6.png" alt="Descarga de reporte" width="600"/>
+</div>
+
+**Request:**
+
+| Parámetro | Tipo | Obligatorio | Descripción |
+|---|---|---|---|
+| `startDate` | `LocalDate` | No | Inicio del rango. Default: inicio del semestre activo. |
+| `endDate` | `LocalDate` | No | Fin del rango. Default: fin del semestre activo. |
+| `metricType` | `InstitutionalMetricType` | No | `ALL`, `EVENTS`, `PARTICIPATION`, `SOCIAL_ACTIVITY`. Default: `ALL`. |
+
+**Response 200 OK (`metricType=ALL`):**
+```json
+{
+  "eventsStats": {
+    "totalCreated": 128,
+    "activeCount": 0,
+    "cancelledCount": 0,
+    "finishedCount": 0
+  },
+  "participationStats": {
+    "totalActiveStudents": 340,
+    "totalParchesAttended": 128,
+    "totalRsvpConfirmed": 0,
+    "participationTrend": "GROWING"
+  },
+  "socialActivityIndex": 0.63
+}
+```
+
+| `metricType` | Campos poblados |
+|---|---|
+| `ALL` | `eventsStats`, `participationStats`, `socialActivityIndex` |
+| `EVENTS` | Solo `eventsStats` |
+| `PARTICIPATION` | Solo `participationStats` |
+| `SOCIAL_ACTIVITY` | Solo `socialActivityIndex` |
+
+El índice de actividad social (`socialActivityIndex`) es un compuesto ponderado normalizado a `[0.0, 1.0]`: asistencia a parches × 0.40 + conexiones entre pares × 0.35 + RSVPs × 0.25, escalado sobre 10 000 unidades.
+
+El `participationTrend` compara los usuarios activos del primer y último snapshot del período: `GROWING` si creció > 5 %, `DECLINING` si cayó > 5 %, `STABLE` en cualquier otro caso.
+
+**Errores:**
+
+| HTTP | Escenario | Mensaje |
+|:---:|---|---|
+| 401 | JWT inválido o ausente | `"JWT inválido o ausente"` |
+| 403 | Sin ROLE_BIENESTAR | Spring Security rechaza |
 ---
 
 ## 10. Colas de Mensajería
@@ -622,7 +796,7 @@ Ejemplo de documentación en `DashboardService`:
  * construye un snapshot vacío con todos los días en 0 y nivel NUEVO.
  * Nunca lanza excepción por ausencia de métricas (Empty Object Pattern).
  */
-public StudentDashboardMetric execute(UUID userId) { ... }
+public StudentDashboardMetric execute(UUID userId) { '...' }
 ```
 
 ---
