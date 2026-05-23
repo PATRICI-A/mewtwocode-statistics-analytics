@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -170,9 +169,8 @@ public class ReportController {
                     content = @Content(schema = @Schema(implementation = ReportFiltersRequest.class))
             )
             @Valid @RequestBody ReportFiltersRequest filtersRequest,
-            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UUID userId) {
 
-        UUID userId = UUID.fromString(jwt.getSubject());
         ReportRequest report = requestReportUseCase.create(userId, filtersRequest.toDomain());
         if (filtersRequest.isPreview()) {
             return ResponseEntity.ok(ReportRequestResponse.from(report));
@@ -279,9 +277,8 @@ public class ReportController {
                     example = "550e8400-e29b-41d4-a716-446655440000"
             )
             @PathVariable UUID id,
-            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UUID userId) {
 
-        UUID userId = UUID.fromString(jwt.getSubject());
         ReportRequest report = requestReportUseCase.findById(id, userId);
 
         if (report.getStatus() == ReportStatus.PENDING) {
@@ -359,8 +356,7 @@ public class ReportController {
             )
     })
     public ResponseEntity<List<ReportHistoryDTO>> getReportHistory(
-            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
-        UUID userId = UUID.fromString(jwt.getSubject());
+            @Parameter(hidden = true) @AuthenticationPrincipal UUID userId) {
         return ResponseEntity.ok(requestReportUseCase.getHistory(userId));
     }
 }

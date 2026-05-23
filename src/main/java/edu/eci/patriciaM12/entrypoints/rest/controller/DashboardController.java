@@ -17,7 +17,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -111,8 +110,7 @@ public class DashboardController {
             )
     })
     public ResponseEntity<StudentDashboardResponse> getDashboard(
-            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
-        UUID userId = UUID.fromString(jwt.getSubject());
+            @Parameter(hidden = true) @AuthenticationPrincipal UUID userId) {
         return ResponseEntity.ok(
                 StudentDashboardResponse.from(getStudentDashboardUseCase.execute(userId)));
     }
@@ -191,7 +189,7 @@ public class DashboardController {
             )
     })
     public ResponseEntity<SocialIndicatorsResponse> getSocialIndicators(
-            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
+            @Parameter(hidden = true) @AuthenticationPrincipal UUID userId,
 
             @Parameter(
                     description = """
@@ -203,7 +201,6 @@ public class DashboardController {
                     schema = @Schema(type = "integer", minimum = "0", defaultValue = "0")
             )
             @RequestParam(required = false) Integer weekRange) {
-        UUID userId = UUID.fromString(jwt.getSubject());
         return ResponseEntity.ok(getSocialIndicatorsUseCase.execute(userId, weekRange));
     }
 
@@ -272,8 +269,7 @@ public class DashboardController {
             )
     })
     public ResponseEntity<InteractionAnalyticsResponse> getInteractionAnalytics(
-            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
-        UUID userId = UUID.fromString(jwt.getSubject());
+            @Parameter(hidden = true) @AuthenticationPrincipal UUID userId) {
         return ResponseEntity.ok(getInteractionAnalyticsUseCase.execute(userId));
     }
 }

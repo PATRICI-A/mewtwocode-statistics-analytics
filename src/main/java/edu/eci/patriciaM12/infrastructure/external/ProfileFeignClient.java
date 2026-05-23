@@ -12,6 +12,6 @@ import java.util.UUID;
 )
 public interface ProfileFeignClient {
 
-    @GetMapping("/api/v1/users/internal/{userId}/connections-count")
-    Integer getUserConnectionsCount(@PathVariable UUID userId);
+    @GetMapping("/api/v1/users/internal/{userId}/friends-count")
+    Integer getUserFriendsCount(@PathVariable UUID userId);
 }

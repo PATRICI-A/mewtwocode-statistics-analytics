@@ -15,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -139,9 +138,6 @@ public class InstitutionalStatsController {
             )
     })
     public ResponseEntity<InstitutionalStatsResponse> getInstitutionalStats(
-            @Parameter(hidden = true)
-            @RequestHeader(value = "Authorization", required = false) String authorization,
-
             @Parameter(
                     description = """
                             Inclusive start date of the observation window in ISO-8601 format \
