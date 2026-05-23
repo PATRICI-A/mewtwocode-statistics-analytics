@@ -99,7 +99,7 @@ public class SocialIndicatorsService implements GetSocialIndicatorsUseCase {
     private WeeklyParticipationDTO buildParticipation(StudentDashboardMetric metric, UUID userId) {
         int parcheCount = fetchSafe(() -> hangoutFeignClient.getUserParcheCount(userId));
         int eventRsvpCount = fetchSafe(() -> campusEventsFeignClient.getUserRsvpCount(userId));
-        int activeConnections = fetchSafe(() -> profileFeignClient.getUserConnectionsCount(userId));
+        int activeConnections = fetchSafe(() -> profileFeignClient.getUserFriendsCount(userId));
         return WeeklyParticipationDTO.builder()
                 .parcheCount(parcheCount)
                 .eventRsvpCount(eventRsvpCount)
@@ -116,7 +116,7 @@ public class SocialIndicatorsService implements GetSocialIndicatorsUseCase {
      * @return the populated {@link NetworkGrowthDTO}
      */
     private NetworkGrowthDTO buildNetworkGrowth(StudentDashboardMetric current, StudentDashboardMetric previous, UUID userId) {
-        int currentConnections = fetchSafe(() -> profileFeignClient.getUserConnectionsCount(userId));
+        int currentConnections = fetchSafe(() -> profileFeignClient.getUserFriendsCount(userId));
         int previousConnections = 0;
         Double growthRate = null;
 

@@ -21,7 +21,7 @@ import edu.eci.patriciaM12.entrypoints.rest.controller.ReportController;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.oauth2.jwt.Jwt;
+
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -45,7 +45,6 @@ class ControllerTest {
         GetInteractionAnalyticsUseCase interactionUseCase = mock(GetInteractionAnalyticsUseCase.class);
         DashboardController controller = new DashboardController(useCase, socialUseCase, interactionUseCase);
         UUID userId = UUID.randomUUID();
-        Jwt jwt = jwtFor(userId);
         Map<DayOfWeek, Integer> weekly = new EnumMap<>(DayOfWeek.class);
         weekly.put(DayOfWeek.MONDAY, 4);
         StudentDashboardMetric metric = StudentDashboardMetric.builder()
@@ -57,7 +56,7 @@ class ControllerTest {
                 .build();
         when(useCase.execute(userId)).thenReturn(metric);
 
-        ResponseEntity<StudentDashboardResponse> response = controller.getDashboard(jwt);
+        ResponseEntity<StudentDashboardResponse> response = controller.getDashboard(userId);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
@@ -81,7 +80,7 @@ class ControllerTest {
                 .build();
         when(useCase.create(eq(userId), any(ReportFilters.class))).thenReturn(report);
 
-        ResponseEntity<ReportRequestResponse> response = controller.requestReport(request, jwtFor(userId));
+        ResponseEntity<ReportRequestResponse> response = controller.requestReport(request, userId);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
         assertThat(response.getBody()).isNotNull();
@@ -101,7 +100,7 @@ class ControllerTest {
                 .status(ReportStatus.PENDING)
                 .build());
 
-        ResponseEntity<String> response = controller.downloadReport(reportId, jwtFor(userId));
+        ResponseEntity<String> response = controller.downloadReport(reportId, userId);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
         assertThat(response.getBody()).contains("still being generated");
@@ -119,7 +118,7 @@ class ControllerTest {
                 .status(ReportStatus.FAILED)
                 .build());
 
-        ResponseEntity<String> response = controller.downloadReport(reportId, jwtFor(userId));
+        ResponseEntity<String> response = controller.downloadReport(reportId, userId);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response.getBody()).contains("failed");
@@ -138,7 +137,7 @@ class ControllerTest {
                 .fileUrl("/tmp/report.csv")
                 .build());
 
-        ResponseEntity<String> response = controller.downloadReport(reportId, jwtFor(userId));
+        ResponseEntity<String> response = controller.downloadReport(reportId, userId);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isEqualTo("/tmp/report.csv");
@@ -156,16 +155,10 @@ class ControllerTest {
         when(useCase.getPanel(start, end, MetricType.MATCHES, null)).thenReturn(expected);
 
         ResponseEntity<AdminAnalyticsResponse> response =
-                controller.getAdminAnalyticsPanel("Bearer token", start, end, MetricType.MATCHES, null);
+                controller.getAdminAnalyticsPanel(start, end, MetricType.MATCHES, null);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isSameAs(expected);
     }
 
-    private Jwt jwtFor(UUID userId) {
-        return Jwt.withTokenValue("token")
-                .header("alg", "none")
-                .subject(userId.toString())
-                .build();
-    }
 }
