@@ -1,5 +1,6 @@
 package edu.eci.patriciaM12.application.dto.response;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Value;
 
@@ -17,29 +18,44 @@ import lombok.Value;
  */
 @Value
 @Builder
+@Schema(
+        name = "SocialAffinity",
+        description = """
+                Computed social affinity score for a student (RF-38 RN-38.5). The total score is a \
+                weighted composite: shared interests (40%), common parches attended (35%), and \
+                mutual peer connections (25%). All scores are normalised to [0.0, 1.0]."""
+)
 public class SocialAffinityDTO {
 
-    /**
-     * Normalised score derived from shared interest tags (PatchCategory overlap).
-     * Contributes 40 % to the total score.
-     */
+    @Schema(
+            description = "Normalised score derived from shared interest tags (PatchCategory overlap). Contributes 40% to total.",
+            example = "0.85",
+            minimum = "0",
+            maximum = "1"
+    )
     Double sharedInterestsScore;
 
-    /**
-     * Normalised score derived from parches attended in common with peers.
-     * Contributes 35 % to the total score.
-     */
+    @Schema(
+            description = "Normalised score derived from parches attended in common with peers. Contributes 35% to total.",
+            example = "0.72",
+            minimum = "0",
+            maximum = "1"
+    )
     Double commonParchesScore;
 
-    /**
-     * Normalised score derived from mutual peer connections.
-     * Contributes 25 % to the total score.
-     */
+    @Schema(
+            description = "Normalised score derived from mutual peer connections. Contributes 25% to total.",
+            example = "0.68",
+            minimum = "0",
+            maximum = "1"
+    )
     Double mutualConnectionsScore;
 
-    /**
-     * Weighted composite affinity score.
-     * Formula: {@code sharedInterests×0.40 + commonParches×0.35 + mutualConnections×0.25}.
-     */
+    @Schema(
+            description = "Weighted composite affinity score. Formula: sharedInterests×0.40 + commonParches×0.35 + mutualConnections×0.25",
+            example = "0.764",
+            minimum = "0",
+            maximum = "1"
+    )
     Double totalScore;
 }

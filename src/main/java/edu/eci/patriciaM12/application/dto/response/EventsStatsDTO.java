@@ -1,5 +1,6 @@
 package edu.eci.patriciaM12.application.dto.response;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Value;
 
@@ -12,17 +13,35 @@ import lombok.Value;
  */
 @Value
 @Builder
+@Schema(
+        name = "EventsStats",
+        description = """
+                Aggregated institutional-level statistics about parche/event lifecycle states (RF-40 RN-40.2). \
+                Provides a complete view of event health across the campus."""
+)
 public class EventsStatsDTO {
 
-    /** Total number of parches created within the observed period. */
+    @Schema(
+            description = "Total number of parches created within the observed period",
+            example = "156"
+    )
     Integer totalCreated;
 
-    /** Number of parches currently in an active state. */
+    @Schema(
+            description = "Number of parches currently in an active state",
+            example = "89"
+    )
     Integer activeCount;
 
-    /** Number of parches that were cancelled before taking place. */
+    @Schema(
+            description = "Number of parches that were cancelled before taking place",
+            example = "23"
+    )
     Integer cancelledCount;
 
-    /** Number of parches that have already concluded. */
+    @Schema(
+            description = "Number of parches that have already concluded",
+            example = "44"
+    )
     Integer finishedCount;
 }

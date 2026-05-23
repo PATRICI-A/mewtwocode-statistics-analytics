@@ -1,6 +1,7 @@
 package edu.eci.patriciaM12.application.dto.response;
 
 import edu.eci.patriciaM12.domain.model.enums.ParticipationTrend;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Value;
 
@@ -14,17 +15,38 @@ import lombok.Value;
  */
 @Value
 @Builder
+@Schema(
+        name = "ParticipationStats",
+        description = """
+                Aggregated institutional-level student participation statistics (RF-40 RN-40.2). \
+                Provides a complete view of student engagement across the campus, including \
+                active student counts, attendance figures, and trend analysis."""
+)
 public class ParticipationStatsDTO {
 
-    /** Total number of distinct students who attended at least one parche in the period. */
+    @Schema(
+            description = "Total number of distinct students who attended at least one parche in the period",
+            example = "1240"
+    )
     Integer totalActiveStudents;
 
-    /** Cumulative number of parche attendances across all students in the period. */
+    @Schema(
+            description = "Cumulative number of parche attendances across all students in the period",
+            example = "3450"
+    )
     Integer totalParchesAttended;
 
-    /** Total number of event RSVPs confirmed by students in the period. */
+    @Schema(
+            description = "Total number of event RSVPs confirmed by students in the period",
+            example = "890"
+    )
     Integer totalRsvpConfirmed;
 
-    /** Directional trend of student participation relative to the previous equivalent period. */
+    @Schema(
+            description = """
+                    Directional trend of student participation relative to the previous equivalent period. \
+                    Possible values: `GROWING` (increase > 5%), `DECLINING` (decrease > 5%), `STABLE` (otherwise).""",
+            example = "GROWING"
+    )
     ParticipationTrend participationTrend;
 }
