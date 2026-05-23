@@ -1,5 +1,6 @@
 package edu.eci.patriciaM12.application.dto.response;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Value;
 
@@ -15,22 +16,31 @@ import lombok.Value;
  */
 @Value
 @Builder
+@Schema(
+        name = "Alert",
+        description = """
+                Metric alert generated when a key indicator drops more than 30% relative to the \
+                previous week (RF-18 RN-18.6). Displayed on the administrator dashboard to highlight \
+                concerning trends that may require attention."""
+)
 public class AlertDTO {
 
-    /**
-     * Machine-readable name of the metric that triggered the alert
-     * (e.g., {@code "activeUsers"}, {@code "totalPatches"}).
-     */
+    @Schema(
+            description = "Machine-readable name of the metric that triggered the alert",
+            example = "activeUsers"
+    )
     String metricName;
 
-    /**
-     * Percentage decrease relative to the same metric measured in the previous week.
-     * Always a positive value (e.g., {@code 35.0} means a 35 % drop).
-     */
+    @Schema(
+            description = "Percentage decrease relative to the same metric measured in the previous week. Always a positive value.",
+            example = "35.0",
+            minimum = "0"
+    )
     Double dropPercentage;
 
-    /**
-     * Human-readable description of the alert intended for display on the administrator panel.
-     */
+    @Schema(
+            description = "Human-readable description of the alert intended for display on the administrator panel",
+            example = "Active users dropped by 35% compared to last week"
+    )
     String message;
 }

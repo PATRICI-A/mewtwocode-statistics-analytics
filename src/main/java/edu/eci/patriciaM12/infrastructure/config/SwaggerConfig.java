@@ -2,7 +2,6 @@ package edu.eci.patriciaM12.infrastructure.config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
@@ -20,12 +19,6 @@ public class SwaggerConfig {
 
     private static final String BEARER_SCHEME = "bearerAuth";
 
-    /**
-     * Produces the {@link OpenAPI} bean used by SpringDoc to generate the API specification.
-     *
-     * @return an {@link OpenAPI} instance configured with service metadata, security scheme,
-     *         and organised tags for the Swagger UI
-     */
     @Bean
     public OpenAPI openAPI() {
         return new OpenAPI()
@@ -51,11 +44,7 @@ public class SwaggerConfig {
                                 applying time-decay formulas, normalisation algorithms, and configurable date ranges.
                                 Write operations (report generation) follow an async request-poll pattern.
                                 """)
-                        .version("v1.0.0")
-                        .contact(new Contact()
-                                .name("PATRICI.A Platform Team")
-                                .email("support@eci.edu.co")
-                                .url("https://www.escuelaing.edu.co")))
+                        .version("v1.0.0"))
                 .addSecurityItem(new SecurityRequirement().addList(BEARER_SCHEME))
                 .components(new Components()
                         .addSecuritySchemes(BEARER_SCHEME, new SecurityScheme()

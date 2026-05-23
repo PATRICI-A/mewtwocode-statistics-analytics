@@ -1,6 +1,7 @@
 package edu.eci.patriciaM12.application.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Value;
 
@@ -13,48 +14,62 @@ import java.util.List;
  * metric-type filter applied at query time.  The full response (no filter) includes all
  * nine fields below.
  * </p>
- *
- * <ul>
- *   <li>{@code activeUsers} — time-series and total for active user counts (RN-18.1)</li>
- *   <li>{@code parcheStats} — total and per-category parche counts (RN-18.2)</li>
- *   <li>{@code topEvents} — ranked list of the most-attended events (RN-18.3)</li>
- *   <li>{@code matchSuccessRate} — percentage of successful parche matches (RN-18.4)</li>
- *   <li>{@code campusHeatmap} — activity density per zone and hour (RN-18.5)</li>
- *   <li>{@code retentionRate} — percentage of users who returned in the period (RN-18.7)</li>
- *   <li>{@code abandonedParches} — count of parches cancelled or left without members (RN-18.8)</li>
- *   <li>{@code avgTimeToFirstMember} — average minutes until a parche gets its first member (RN-18.9)</li>
- *   <li>{@code alerts} — list of metrics that dropped more than 30 % vs. last week (RN-18.6)</li>
- * </ul>
  */
 @Value
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Schema(
+        name = "AdminAnalyticsResponse",
+        description = """
+                Comprehensive analytics dashboard for platform administrators (RF-18). Includes up to \
+                nine metric categories depending on the applied filters. Fields are omitted from the \
+                JSON response when filtered out via the `metricType` parameter. The full unfiltered \
+                response contains all metrics described below."""
+)
 public class AdminAnalyticsResponse {
 
-    /** Time-series of active-user counts across the requested period. */
+    @Schema(description = "Time-series of active-user counts across the requested period (RN-18.1)")
     AnalyticsDTO activeUsers;
 
-    /** Aggregated parche counts grouped by category. */
+    @Schema(description = "Aggregated parche counts grouped by category (RN-18.2)")
     AnalyticsDTO parcheStats;
 
-    /** Ranked list of the top events by RSVP count in the period. */
+    @Schema(description = "Ranked list of the top events by RSVP count in the period (RN-18.3)")
     List<EventAnalyticsDTO> topEvents;
 
-    /** Percentage of M05 parche matches that resulted in confirmed attendance. */
+    @Schema(
+            description = "Percentage of M05 parche matches that resulted in confirmed attendance (RN-18.4)",
+            example = "78.5",
+            minimum = "0",
+            maximum = "100"
+    )
     Double matchSuccessRate;
 
-    /** Hourly activity density map broken down by campus zone. */
+    @Schema(description = "Hourly activity density map broken down by campus zone (RN-18.5)")
     HeatmapDTO campusHeatmap;
 
-    /** Percentage of users who were active in both this period and the previous equivalent period. */
+    @Schema(
+            description = "Percentage of users who were active in both this period and the previous equivalent period (RN-18.7)",
+            example = "65.2",
+            minimum = "0",
+            maximum = "100"
+    )
     Double retentionRate;
 
-    /** Number of parches that were abandoned (cancelled or never reached minimum membership). */
+    @Schema(
+            description = "Number of parches that were abandoned (cancelled or never reached minimum membership) (RN-18.8)",
+            example = "12"
+    )
     Integer abandonedParches;
 
-    /** Average time in minutes from parche creation until the first member joins. */
+    @Schema(
+            description = "Average time in minutes from parche creation until the first member joins (RN-18.9)",
+            example = "45"
+    )
     Long avgTimeToFirstMember;
 
-    /** Alerts for metrics that dropped more than 30 % relative to the previous week (RN-18.6). */
+    @Schema(
+            description = "Alerts for metrics that dropped more than 30% relative to the previous week (RN-18.6)"
+    )
     List<AlertDTO> alerts;
 }

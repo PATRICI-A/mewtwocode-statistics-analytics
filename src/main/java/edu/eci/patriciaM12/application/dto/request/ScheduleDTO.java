@@ -1,6 +1,7 @@
 package edu.eci.patriciaM12.application.dto.request;
 
 import edu.eci.patriciaM12.domain.model.enums.ScheduleFrequency;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -16,20 +17,33 @@ import lombok.NoArgsConstructor;
  */
 @Data
 @NoArgsConstructor
+@Schema(
+        name = "Schedule",
+        description = """
+                Recurring delivery schedule configuration for automated report generation (RF-19 RN-19.6). \
+                When provided, the report service registers a background job that automatically \
+                regenerates the report at the specified frequency and delivers it to the configured \
+                e-mail address."""
+)
 public class ScheduleDTO {
 
-    /**
-     * How often the report should be automatically regenerated and delivered.
-     * Must not be {@code null} when scheduling is requested.
-     */
     @NotNull
+    @Schema(
+            description = """
+                    How often the report should be automatically regenerated and delivered. \
+                    Supported values: `DAILY`, `WEEKLY`, `MONTHLY`.""",
+            example = "WEEKLY",
+            requiredMode = Schema.RequiredMode.REQUIRED
+    )
     private ScheduleFrequency frequency;
 
-    /**
-     * E-mail address to which the generated report file will be delivered.
-     * Must be a syntactically valid e-mail address.
-     */
     @Email
     @NotNull
+    @Schema(
+            description = "E-mail address to which the generated report file will be delivered.",
+            example = "analytics@eci.edu.co",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            format = "email"
+    )
     private String deliveryEmail;
 }
